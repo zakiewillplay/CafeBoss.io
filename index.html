@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Cafe Boss – Free digital QR menu for your cafe. No app, no images, just beautiful text. Start in minutes."/>
+    <meta name="keywords" content="QR menu, digital menu, cafe, restaurant, free, no images"/>
+    <meta name="robots" content="index, follow"/>
+    <title>Cafe Boss – Free Digital QR Menus</title>
+    <style>
+        :root {
+            --primary: #FF6B35;
+            --accent: #2F3E46;
+            --cream: #FDFCDC;
+            --bg: #1a1c1d;
+            --text: #f0f0f0;
+            --card-bg: #2a2a2c;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+            animation: fadeIn 0.8s ease;
+        }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+        .container { max-width: 500px; width: 100%; text-align: center; }
+        .logo {
+            font-size: 2.8rem; font-weight: 700; color: var(--primary);
+            margin-bottom: 0.5rem; animation: popIn 0.6s ease;
+        }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity:0; } 80% { transform: scale(1.1); } 100% { transform: scale(1); opacity:1; } }
+        .tagline { font-size: 1.1rem; color: var(--cream); opacity: 0.9; margin-bottom: 2.5rem; }
+        .cta {
+            display: inline-block; background: var(--primary); color: #fff;
+            padding: 0.9rem 2.2rem; border-radius: 30px; font-size: 1.1rem;
+            font-weight: 600; text-decoration: none;
+            box-shadow: 0 6px 18px rgba(255,107,53,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .cta:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(255,107,53,0.5); }
+        .features { display: flex; flex-direction: column; gap: 1.2rem; margin: 3rem 0; }
+        .feature-card {
+            background: var(--card-bg); padding: 1.5rem; border-radius: 16px;
+            text-align: left; display: flex; align-items: center; gap: 1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .feature-icon { font-size: 2rem; min-width: 50px; text-align: center; }
+        .feature-text h3 { color: var(--primary); font-size: 1.1rem; margin-bottom: 0.3rem; }
+        .feature-text p { font-size: 0.9rem; opacity: 0.8; }
+        footer { margin-top: auto; padding: 1rem 0; opacity: 0.6; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">☕ Cafe Boss</div>
+        <p class="tagline">Free digital QR menus for your cafe. No images, just beautiful text.</p>
+        <a href="auth.html" class="cta">Get Started Free</a>
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <div class="feature-text"><h3>Instant QR Menu</h3><p>Create your digital menu in minutes – no coding.</p></div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <div class="feature-text"><h3>Easy Ordering</h3><p>Customers scan, browse, and order from their phone.</p></div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <div class="feature-text"><h3>Your Brand Colors</h3><p>Match your cafe's vibe with custom colors & text.</p></div>
+            </div>
+        </div>
+        <footer>© 2026 Cafe Boss – 100% Free</footer>
+    </div>
+</body>
+</html>
