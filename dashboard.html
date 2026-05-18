@@ -62,15 +62,29 @@
         input:focus, textarea:focus { outline:none; border-color:var(--primary); }
         button { background:var(--primary); color:white; border:none; padding:0.6rem 1.3rem; border-radius:24px; font-weight:600; cursor:pointer; font-size:0.85rem; transition:background 0.2s, transform 0.1s; }
         button:hover { background:#e85d2a; transform:translateY(-1px); }
-        .btn-outline { background:transparent; border:1px solid var(--primary); color:var(--primary); }
+        .btn-outline { background:transparent; border:1px solid var(--primary); color:var(--primary); display:inline-block; text-align:center; }
         .note { font-size:0.7rem; opacity:0.6; margin-top:0.2rem; }
-        .visually-hidden { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
         .collapsible-header { cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
         .collapsed-content { display:none; }
         .collapsed-content.open { display:block; animation: slideDown 0.3s ease; }
         @keyframes slideDown { from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);} }
         .menu-item { display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #444; align-items:center; animation: fadeIn 0.3s; }
         footer { text-align:center; margin-top:2rem; opacity:0.5; font-size:0.7rem; }
+
+        /* FIX: label wrapper for file inputs – no JavaScript click needed */
+        .file-btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .file-btn-wrapper input[type="file"] {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -80,6 +94,7 @@
         <div class="stat-card"><div class="stat-value" id="totalItems">0</div><div class="stat-label">Items</div></div>
         <div class="stat-card"><div class="stat-value" id="totalOrders">0</div><div class="stat-label">Orders</div></div>
     </div>
+
     <!-- Orders -->
     <div class="card">
         <h3>📦 Orders <span class="badge" id="orderBadge" style="display:none;">0</span></h3>
@@ -91,7 +106,8 @@
         <div class="order-list" id="orderListContainer"><p class="note">No orders</p></div>
         <button id="requestNotificationPermissionBtn" style="display:none; margin-top:0.5rem;" class="btn-outline">🔔 Enable Notifications</button>
     </div>
-    <!-- Settings (collapsible) -->
+
+    <!-- Settings -->
     <div class="card">
         <div class="collapsible-header"><h3>⚙️ Settings</h3><span>▼</span></div>
         <div class="collapsed-content open" id="settingsSection">
@@ -103,19 +119,26 @@
             <button id="saveSettingsBtn">Save</button>
         </div>
     </div>
+
     <!-- QR Code -->
     <div class="card"><h3>📱 QR Menu</h3><button id="qrBtn">Generate QR</button><div style="margin-top:1rem; text-align:center;"><div id="qrcode"></div><div id="qrLinkDisplay" style="font-size:0.75rem; word-break:break-all; opacity:0.7; margin-top:0.4rem;"></div></div></div>
-    <!-- Smart Menu Builder (collapsible) -->
+
+    <!-- Smart Menu Builder (OCR) – FIXED CAMERA/GALLERY -->
     <div class="card">
         <div class="collapsible-header"><h3>📸 Smart Menu Builder</h3><span>▶</span></div>
         <div class="collapsed-content" id="smartSection">
             <p class="note">Snap a photo – only lines with prices are kept.</p>
             <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                <button class="btn-outline" id="openCameraBtn">📷 Camera</button>
-                <button class="btn-outline" id="openGalleryBtn">🖼️ Gallery</button>
+                <!-- FIXED: label wraps input, no JavaScript click needed -->
+                <label class="btn-outline file-btn-wrapper">
+                    📷 Camera
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" />
+                </label>
+                <label class="btn-outline file-btn-wrapper">
+                    🖼️ Gallery
+                    <input type="file" id="galleryInput" accept="image/*" />
+                </label>
             </div>
-            <input type="file" id="cameraInput" accept="image/*" capture="environment" class="visually-hidden" />
-            <input type="file" id="galleryInput" accept="image/*" class="visually-hidden" />
             <img id="imagePreview" alt="Preview" style="max-width:100%; max-height:250px; border-radius:10px; margin:0.8rem 0; display:none;" />
             <button id="scanBtn" style="display:none;">🔍 Scan & Extract</button>
             <div id="scanResult"></div>
@@ -123,7 +146,8 @@
             <div id="categoryAssign" style="display:none; margin-top:0.8rem;"><label>Category:</label><input type="text" id="globalCategory" placeholder="Coffee" /><button id="addAllBtn">Add All</button></div>
         </div>
     </div>
-    <!-- Bulk Add (collapsible) -->
+
+    <!-- Bulk Add -->
     <div class="card">
         <div class="collapsible-header"><h3>📋 Bulk Add</h3><span>▶</span></div>
         <div class="collapsed-content" id="bulkSection">
@@ -132,7 +156,8 @@
             <button id="bulkAddBtn">Add All</button><p id="bulkMessage" class="note"></p>
         </div>
     </div>
-    <!-- Add Item (collapsible) -->
+
+    <!-- Add Item -->
     <div class="card">
         <div class="collapsible-header"><h3>✏️ Add Item</h3><span>▶</span></div>
         <div class="collapsed-content" id="itemSection">
@@ -151,6 +176,7 @@
             </form>
         </div>
     </div>
+
     <!-- Menu Items -->
     <div class="card"><h3>📃 Menu Items</h3><div id="menuList"><p class="note">Loading...</p></div></div>
     <footer>Cafe Boss © 2026 – Free Forever</footer>
@@ -160,7 +186,8 @@
     <script type="module">
         const SUPABASE_URL = 'https://hhkuvffjjaglhutlxncm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhoa3V2ZmZqamFnbGh1dGx4bmNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTY3MzEsImV4cCI6MjA5NDY3MjczMX0.wbuGuK9hV9ie4afGuyximb7iK_g9dj9CVaXNY8guxDw';
-        const BASE_MENU_URL = 'https://zakiewillplay-cmyk.github.io/menu/menu.html?id=';
+        // ✅ FIXED: new repository URL
+        const BASE_MENU_URL = 'https://zakiewillplay.github.io/CafeBoss.io/menu.html?id=';
         let currentOrderTab = 'new';
         let allOrders = [];
 
@@ -202,7 +229,7 @@
                 alert('Saved!');
             });
 
-            // QR
+            // QR Code – now uses the new URL
             document.getElementById('qrBtn').addEventListener('click',()=>{
                 const url=BASE_MENU_URL+cafe.id;
                 document.getElementById('qrcode').innerHTML='';
@@ -380,10 +407,63 @@
             };
             await loadCategories();
 
-            // Smart Menu Builder (OCR) – unchanged, included in full file
-            // [The full OCR code is present in the actual file; omitted here for brevity but will be in final answer]
+            // ---------- SMART MENU BUILDER (OCR) – FIXED CAMERA/GALLERY ----------
+            const cameraInput = document.getElementById('cameraInput');
+            const galleryInput = document.getElementById('galleryInput');
+            const imagePreview = document.getElementById('imagePreview');
+            const scanBtn = document.getElementById('scanBtn');
+            const ocrProgress = document.getElementById('ocrProgress');
+            const ocrBar = document.getElementById('ocrBar');
+            const ocrStatus = document.getElementById('ocrStatus');
+            const scanResult = document.getElementById('scanResult');
+            const categoryAssign = document.getElementById('categoryAssign');
+            const globalCategory = document.getElementById('globalCategory');
+            const addAllBtn = document.getElementById('addAllBtn');
+            let extractedItems = [];
 
-            document.getElementById('logoutBtn').addEventListener('click',async()=>{await client.auth.signOut();window.location.href='index.html';});
+            function handleImageSelection(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    imagePreview.src = ev.target.result;
+                    imagePreview.style.display = 'block';
+                    scanBtn.style.display = 'inline-block';
+                    extractedItems = [];
+                    scanResult.innerHTML = '';
+                    categoryAssign.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // ✅ FIXED: change event on the input itself (no programmatic click needed)
+            cameraInput.addEventListener('change', e => { if (e.target.files[0]) handleImageSelection(e.target.files[0]); });
+            galleryInput.addEventListener('change', e => { if (e.target.files[0]) handleImageSelection(e.target.files[0]); });
+
+            scanBtn.addEventListener('click', async () => {
+                if (!imagePreview.src) return;
+                scanBtn.disabled = true; ocrProgress.style.display = 'block'; ocrBar.value = 0; ocrStatus.textContent = 'Reading...';
+                try {
+                    const { data: { text } } = await Tesseract.recognize(imagePreview.src, 'eng', {
+                        logger: m => { if (m.status === 'recognizing text') { ocrBar.value = Math.round(m.progress * 100); ocrStatus.textContent = `Reading... ${Math.round(m.progress * 100)}%`; } }
+                    });
+                    extractedItems = text.split('\n').filter(l => l.trim()).map(line => { const m = line.match(/(.+?)\s*[₹]?(\d+\.?\d*)\s*$/); return m ? { name: m[1].trim(), price: m[2] } : null; }).filter(Boolean);
+                    scanResult.innerHTML = extractedItems.map((item, idx) => `<div style="display:flex; gap:0.3rem; margin-bottom:0.3rem;"><input type="text" value="${item.name}" style="flex:2" /><input type="number" value="${item.price}" step="0.01" style="flex:1" /><button class="btn-outline remove-extracted-btn" data-index="${idx}">✕</button></div>`).join('');
+                    document.querySelectorAll('.remove-extracted-btn').forEach(b => b.addEventListener('click', function() { extractedItems.splice(+this.dataset.index, 1); scanBtn.click(); }));
+                    categoryAssign.style.display = 'block';
+                } catch (err) { alert('OCR failed: ' + err.message); }
+                finally { ocrProgress.style.display = 'none'; scanBtn.disabled = false; }
+            });
+
+            addAllBtn.addEventListener('click', async () => {
+                const cat = globalCategory.value.trim() || 'Uncategorized';
+                const toInsert = extractedItems.filter(i => i.name && !isNaN(parseFloat(i.price))).map(i => ({ cafe_id: cafe.id, name: i.name, price: parseFloat(i.price), category: cat, description: '', available: true }));
+                if (!toInsert.length) return alert('No valid items');
+                const { error } = await client.from('menu_items').insert(toInsert);
+                if (error) alert(error.message);
+                else { alert(`Added ${toInsert.length} items!`); extractedItems = []; scanResult.innerHTML = ''; categoryAssign.style.display = 'none'; imagePreview.style.display = 'none'; scanBtn.style.display = 'none'; cameraInput.value = ''; galleryInput.value = ''; loadItems(); loadCategories(); }
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', async () => { await client.auth.signOut(); window.location.href = 'index.html'; });
         }
     </script>
 </body>
