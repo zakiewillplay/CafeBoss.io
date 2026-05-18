@@ -113,7 +113,7 @@
         </div>
     </div>
 
-    <!-- QR Code Generator (FIXED) -->
+    <!-- QR Code Generator (FIXED – high‑contrast image) -->
     <div class="card">
         <h3>📱 QR Menu</h3>
         <button id="qrBtn">Generate QR</button>
@@ -209,7 +209,7 @@
             const {data:cafe,error:cafeErr}=await client.from('cafes').select('*').eq('owner_id',user.id).single();
             if(cafeErr||!cafe){alert('Cafe not found. Re-signup.');await client.auth.signOut();window.location.href='auth.html';return;}
 
-            // Collapsible sections (also works for menu items toggle)
+            // Collapsible sections (includes menu items toggle)
             document.querySelectorAll('.collapsible-header').forEach(h=>{
                 h.addEventListener('click',()=>{
                     const content=h.nextElementSibling;
@@ -235,19 +235,23 @@
                 alert('Saved!');
             });
 
-            // QR Code (local library)
+            // QR Code – high‑contrast image for Google Lens & gallery
             document.getElementById('qrBtn').addEventListener('click', () => {
                 const url = BASE_MENU_URL + cafe.id;
                 const qrContainer = document.getElementById('qrcode');
                 qrContainer.innerHTML = '';
-                new QRCode(qrContainer, {
-                    text: url,
-                    width: 180,
-                    height: 180,
-                    colorDark: '#000000',
-                    colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.L
-                });
+
+                const img = document.createElement('img');
+                img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000`;
+                img.width = 250;
+                img.height = 250;
+                img.style.display = 'block';
+                img.style.margin = '0 auto';
+                img.style.borderRadius = '12px';
+                img.style.background = '#fff';
+                img.style.padding = '8px';
+                qrContainer.appendChild(img);
+
                 document.getElementById('qrLinkDisplay').textContent = url;
                 navigator.clipboard.writeText(url).then(() => alert('Menu link copied!')).catch(() => {});
             });
@@ -418,7 +422,7 @@
             };
             await loadCategories();
 
-            // ---------- SMART MENU BUILDER (OCR) ----------
+            // Smart Menu Builder (OCR)
             const cameraInput = document.getElementById('cameraInput');
             const galleryInput = document.getElementById('galleryInput');
             const imagePreview = document.getElementById('imagePreview');
