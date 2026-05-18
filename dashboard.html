@@ -71,19 +71,12 @@
         .menu-item { display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #444; align-items:center; animation: fadeIn 0.3s; }
         footer { text-align:center; margin-top:2rem; opacity:0.5; font-size:0.7rem; }
 
-        /* FIX: label wrapper for file inputs – no JavaScript click needed */
+        /* File input wrapper for camera/gallery */
         .file-btn-wrapper {
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-            display: inline-block;
+            position: relative; overflow: hidden; cursor: pointer; display: inline-block;
         }
         .file-btn-wrapper input[type="file"] {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            opacity: 0;
-            cursor: pointer;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
         }
     </style>
 </head>
@@ -120,16 +113,22 @@
         </div>
     </div>
 
-    <!-- QR Code -->
-    <div class="card"><h3>📱 QR Menu</h3><button id="qrBtn">Generate QR</button><div style="margin-top:1rem; text-align:center;"><div id="qrcode"></div><div id="qrLinkDisplay" style="font-size:0.75rem; word-break:break-all; opacity:0.7; margin-top:0.4rem;"></div></div></div>
+    <!-- QR Code Generator (FIXED) -->
+    <div class="card">
+        <h3>📱 QR Menu</h3>
+        <button id="qrBtn">Generate QR</button>
+        <div style="margin-top:1rem; text-align:center;">
+            <div id="qrcode"></div>
+            <div id="qrLinkDisplay" style="font-size:0.75rem; word-break:break-all; opacity:0.7; margin-top:0.4rem;"></div>
+        </div>
+    </div>
 
-    <!-- Smart Menu Builder (OCR) – FIXED CAMERA/GALLERY -->
+    <!-- Smart Menu Builder (OCR) -->
     <div class="card">
         <div class="collapsible-header"><h3>📸 Smart Menu Builder</h3><span>▶</span></div>
         <div class="collapsed-content" id="smartSection">
             <p class="note">Snap a photo – only lines with prices are kept.</p>
             <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                <!-- FIXED: label wraps input, no JavaScript click needed -->
                 <label class="btn-outline file-btn-wrapper">
                     📷 Camera
                     <input type="file" id="cameraInput" accept="image/*" capture="environment" />
@@ -186,7 +185,6 @@
     <script type="module">
         const SUPABASE_URL = 'https://hhkuvffjjaglhutlxncm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhoa3V2ZmZqamFnbGh1dGx4bmNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTY3MzEsImV4cCI6MjA5NDY3MjczMX0.wbuGuK9hV9ie4afGuyximb7iK_g9dj9CVaXNY8guxDw';
-        // ✅ FIXED: new repository URL
         const BASE_MENU_URL = 'https://zakiewillplay.github.io/CafeBoss.io/menu.html?id=';
         let currentOrderTab = 'new';
         let allOrders = [];
@@ -229,16 +227,21 @@
                 alert('Saved!');
             });
 
-            // QR Code – now uses the new URL
-            document.getElementById('qrBtn').addEventListener('click',()=>{
-                const url=BASE_MENU_URL+cafe.id;
-                document.getElementById('qrcode').innerHTML='';
-                const img=document.createElement('img');
-                img.src=`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}`;
-                img.width=180; img.height=180; img.style.display='block'; img.style.margin='0 auto';
-                document.getElementById('qrcode').appendChild(img);
-                document.getElementById('qrLinkDisplay').textContent=url;
-                navigator.clipboard.writeText(url).then(()=>alert('Copied!')).catch(()=>{});
+            // QR Code (local library)
+            document.getElementById('qrBtn').addEventListener('click', () => {
+                const url = BASE_MENU_URL + cafe.id;
+                const qrContainer = document.getElementById('qrcode');
+                qrContainer.innerHTML = '';
+                new QRCode(qrContainer, {
+                    text: url,
+                    width: 180,
+                    height: 180,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+                document.getElementById('qrLinkDisplay').textContent = url;
+                navigator.clipboard.writeText(url).then(() => alert('Menu link copied!')).catch(() => {});
             });
 
             // ---------- ORDERS ----------
@@ -407,7 +410,7 @@
             };
             await loadCategories();
 
-            // ---------- SMART MENU BUILDER (OCR) – FIXED CAMERA/GALLERY ----------
+            // ---------- SMART MENU BUILDER (OCR) ----------
             const cameraInput = document.getElementById('cameraInput');
             const galleryInput = document.getElementById('galleryInput');
             const imagePreview = document.getElementById('imagePreview');
@@ -435,7 +438,6 @@
                 reader.readAsDataURL(file);
             }
 
-            // ✅ FIXED: change event on the input itself (no programmatic click needed)
             cameraInput.addEventListener('change', e => { if (e.target.files[0]) handleImageSelection(e.target.files[0]); });
             galleryInput.addEventListener('change', e => { if (e.target.files[0]) handleImageSelection(e.target.files[0]); });
 
