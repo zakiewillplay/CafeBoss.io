@@ -44,7 +44,7 @@
                         radial-gradient(circle at 80% 70%, rgba(192,57,43,0.08) 0%, transparent 50%);
         }
 
-        /* ----- MAIN WRAPPER (gentle entrance) ----- */
+        /* ----- MAIN WRAPPER ----- */
         .app-wrapper {
             position: relative; z-index:1;
             max-width: 620px; margin:0 auto;
@@ -77,28 +77,21 @@
             background: var(--glass); backdrop-filter: blur(20px);
             border: 1px solid rgba(212,175,55,0.5); border-radius: var(--radius);
             box-shadow: 0 0 45px rgba(212,175,55,0.25);
-            animation: popIn 0.5s ease;
-        }
-        @keyframes popIn {
-            0% { transform: scale(0.92); opacity:0; }
-            100% { transform: scale(1); opacity:1; }
         }
         .header h1 {
             font-family: 'Playfair Display', serif;
             font-size: 2.5rem; color: var(--gold);
             text-shadow: 0 0 15px rgba(212,175,55,0.6);
-            letter-spacing: 1px;
         }
         .header p {
             color: var(--cream); font-style: italic;
             font-size: 1rem; opacity: 0.85; margin-top: 0.3rem;
         }
-        body.light-mode .header p { color: #6B4A2A; }
 
-        /* ----- CATEGORY TABS (animated indicator) ----- */
+        /* ----- CATEGORY TABS ----- */
         .tabs-sticky {
             position: sticky; top: 0.8rem; z-index:15;
-            backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+            backdrop-filter: blur(22px);
             padding: 0.6rem 0; margin-bottom: 1.4rem;
             display: flex; gap: 0.5rem; overflow-x: auto;
         }
@@ -117,7 +110,7 @@
             transform: translateY(-2px);
         }
 
-        /* ----- CATEGORY CARDS (glass + hover lift) ----- */
+        /* ----- CATEGORY CARDS (elevated) ----- */
         .category {
             background: var(--glass); backdrop-filter: blur(18px);
             border: 1px solid rgba(212,175,55,0.3); border-radius: var(--radius);
@@ -137,20 +130,33 @@
             border-bottom: 2px solid var(--gold); padding-bottom: 0.5rem;
         }
 
-        /* ----- ITEM ROW (hover lift + gold glow) ----- */
+        /* ----- ITEM ROW (cool hover & slide) ----- */
         .item {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 1rem 0.6rem;
             border-bottom: 1px solid rgba(255,255,255,0.06);
-            padding: 1rem 0; border-radius: 14px;
+            border-radius: 16px;
             transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 0.2rem;
         }
         .item:hover {
             background: rgba(212,175,55,0.08);
-            transform: translateX(4px);
-            box-shadow: -4px 0 12px rgba(212,175,55,0.1);
+            transform: translateX(6px);
+            box-shadow: -6px 0 18px rgba(212,175,55,0.12);
+        }
+        .item-info {
+            flex: 1;
+            min-width: 0;
         }
         .item-name {
-            font-weight: 600; margin-bottom: 0.3rem;
-            display: flex; align-items: center; gap: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         .featured-badge {
             background: linear-gradient(135deg, var(--gold), #b8922e);
@@ -164,30 +170,75 @@
             to { box-shadow: 0 0 18px var(--gold); }
         }
         .item-desc {
-            font-size: 0.85rem; opacity: 0.65; margin-bottom: 0.4rem;
+            font-size: 0.85rem; opacity: 0.7;
+            margin-bottom: 0.5rem;
         }
 
-        /* ----- VARIANT ROW + QTY (bounce on change) ----- */
-        .variant-row {
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 0.5rem; margin-top: 0.4rem; padding: 0.2rem 0;
+        /* ----- VARIANT PILLS (selectable) ----- */
+        .variant-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.4rem;
         }
-        .variant-name { flex:1; font-size: 0.9rem; font-weight: 500; }
-        .variant-price { color: var(--gold); font-weight: 700; margin: 0 0.6rem; }
-        .qty-box { display: flex; align-items: center; gap: 0.4rem; }
+        .variant-pill {
+            background: rgba(212,175,55,0.1);
+            border: 1px solid var(--gold);
+            border-radius: 20px;
+            padding: 0.3rem 0.9rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gold);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .variant-pill.selected {
+            background: var(--gold);
+            color: var(--dark);
+            box-shadow: 0 0 12px rgba(212,175,55,0.5);
+        }
+        .variant-pill .pill-price {
+            margin-left: 0.3rem;
+            font-weight: 700;
+        }
+
+        /* ----- QUANTITY CONTROLS (pill style) ----- */
+        .qty-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.4rem;
+        }
         .qty-btn {
-            width: 36px; height: 36px; border-radius: 50%;
-            border: 1px solid var(--gold); background: rgba(212,175,55,0.15);
-            color: var(--gold); font-size: 1.3rem; font-weight: bold;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px;
+            border: 1px solid var(--gold);
+            background: rgba(212,175,55,0.15);
+            color: var(--gold);
+            border-radius: 20px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all 0.15s;
         }
-        .qty-btn:active { background: var(--gold); color: var(--dark); transform: scale(0.9); }
+        .qty-btn:active {
+            background: var(--gold);
+            color: var(--dark);
+            transform: scale(0.9);
+        }
         .qty-num {
-            min-width: 26px; text-align: center; font-weight: 600; font-size: 1.1rem;
+            min-width: 28px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
             transition: transform 0.2s;
         }
-        .qty-num.bounce { animation: bouncePop 0.3s ease; }
+        .qty-num.bounce {
+            animation: bouncePop 0.3s ease;
+        }
         @keyframes bouncePop {
             0% { transform: scale(1); }
             50% { transform: scale(1.5); }
@@ -204,7 +255,9 @@
             cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
             transition: transform 0.2s;
         }
-        #cartFloat.pulse { animation: cartPulse 0.4s ease; }
+        #cartFloat.pulse {
+            animation: cartPulse 0.4s ease;
+        }
         @keyframes cartPulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.08); }
@@ -379,7 +432,8 @@
             });
 
             const menuList = document.getElementById('menuList');
-            const cart = {};
+            const cart = {};               // { `${itemId}_${variantName}`: { ... } }
+            const selectedVariants = {};  // itemId → index of selected variant
 
             sortedCats.forEach(cat => {
                 const section = document.createElement('div');
@@ -390,6 +444,8 @@
                 grouped[cat].forEach(item => {
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'item';
+                    itemDiv.dataset.itemId = item.id;
+                    itemDiv.dataset.itemName = item.name;
 
                     const hasVariants = item.description && item.description.startsWith('VAR::');
                     let variants = [];
@@ -402,70 +458,101 @@
                         variants.push({ name: '', price: parseFloat(item.price) });
                     }
 
+                    // Select the first variant by default
+                    selectedVariants[item.id] = 0;
+
                     const featuredBadge = item.featured ? '<span class="featured-badge">🔥 Chef\'s Special</span>' : '';
-                    const itemNameHtml = `<div class="item-name">${item.name} ${featuredBadge}</div>`;
-                    const itemDescHtml = (hasVariants || !item.description) ? '' : `<div class="item-desc">${item.description}</div>`;
+                    const itemDescHtml = (!hasVariants && item.description) ? `<div class="item-desc">${item.description}</div>` : '';
 
-                    let variantsHtml = '';
-                    variants.forEach(v => {
-                        const variantName = v.name || item.name;
-                        const variantId = v.name || 'default';
-                        variantsHtml += `
-                            <div class="variant-row" data-variant-id="${variantId}" data-price="${v.price}">
-                                <span class="variant-name">${variantName}</span>
-                                <span class="variant-price">₹${v.price}</span>
-                                <div class="qty-box">
-                                    <button class="qty-btn qty-dec">−</button>
-                                    <span class="qty-num">0</span>
-                                    <button class="qty-btn qty-inc">+</button>
-                                </div>
+                    // Build variant pills (only if multiple)
+                    let variantPillsHtml = '';
+                    if (variants.length > 1) {
+                        variantPillsHtml = '<div class="variant-pills">';
+                        variants.forEach((v, idx) => {
+                            variantPillsHtml += `
+                                <span class="variant-pill ${idx === 0 ? 'selected' : ''}" data-index="${idx}">
+                                    ${v.name} <span class="pill-price">₹${v.price}</span>
+                                </span>`;
+                        });
+                        variantPillsHtml += '</div>';
+                    }
+
+                    // Price display for single variant
+                    const singlePriceHtml = variants.length === 1 ? `<span class="variant-price" style="color:var(--gold); font-weight:700;">₹${variants[0].price}</span>` : '';
+
+                    // Quantity row
+                    const qtyHtml = `
+                        <div class="qty-row">
+                            <button class="qty-btn qty-dec">−</button>
+                            <span class="qty-num">0</span>
+                            <button class="qty-btn qty-inc">+</button>
+                        </div>`;
+
+                    itemDiv.innerHTML = `
+                        <div class="item-info">
+                            <div class="item-name">${item.name} ${featuredBadge}</div>
+                            ${itemDescHtml}
+                            ${variantPillsHtml}
+                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                ${singlePriceHtml}
                             </div>
-                        `;
-                    });
+                        </div>
+                        ${qtyHtml}`;
 
-                    itemDiv.innerHTML = itemNameHtml + itemDescHtml + `<div class="variants-container">${variantsHtml}</div>`;
-                    itemDiv.dataset.itemId = item.id;
-                    itemDiv.dataset.itemName = item.name;
+                    // Attach variant pill click handlers
+                    if (variants.length > 1) {
+                        const pills = itemDiv.querySelectorAll('.variant-pill');
+                        pills.forEach(pill => {
+                            pill.addEventListener('click', (e) => {
+                                // Update selected pill styling
+                                pills.forEach(p => p.classList.remove('selected'));
+                                pill.classList.add('selected');
+                                const idx = parseInt(pill.dataset.index);
+                                selectedVariants[item.id] = idx;
+                                // Reset quantity for this item in cart because the variant changed? We'll just update the display for consistency
+                                const qtySpan = itemDiv.querySelector('.qty-num');
+                                const variantKey = `${item.id}_${variants[idx].name}`;
+                                const currentCartItem = cart[variantKey];
+                                qtySpan.textContent = currentCartItem ? currentCartItem.qty : 0;
+                            });
+                        });
+                    }
+
+                    // Quantity buttons
+                    const qtyDec = itemDiv.querySelector('.qty-dec');
+                    const qtyInc = itemDiv.querySelector('.qty-inc');
+                    const qtySpan = itemDiv.querySelector('.qty-num');
+
+                    const updateQty = (delta) => {
+                        const variantIndex = selectedVariants[item.id] || 0;
+                        const variant = variants[variantIndex];
+                        const cartKey = `${item.id}_${variant.name}`;
+                        let currentQty = cart[cartKey] ? cart[cartKey].qty : 0;
+                        currentQty = Math.max(0, currentQty + delta);
+                        if (currentQty === 0) {
+                            delete cart[cartKey];
+                        } else {
+                            cart[cartKey] = { id: item.id, name: item.name, variantName: variant.name, price: variant.price, qty: currentQty };
+                        }
+                        qtySpan.textContent = currentQty;
+                        // Bounce
+                        qtySpan.classList.remove('bounce');
+                        void qtySpan.offsetWidth;
+                        qtySpan.classList.add('bounce');
+                        // Cart pulse
+                        const floatBtn = document.getElementById('cartFloat');
+                        floatBtn.classList.remove('pulse');
+                        void floatBtn.offsetWidth;
+                        floatBtn.classList.add('pulse');
+                        updateCartUI();
+                    };
+
+                    qtyDec.addEventListener('click', () => updateQty(-1));
+                    qtyInc.addEventListener('click', () => updateQty(1));
+
                     section.appendChild(itemDiv);
                 });
                 menuList.appendChild(section);
-            });
-
-            // Quantity + cart logic with bounce & pulse animations
-            document.querySelectorAll('.item').forEach(itemDiv => {
-                itemDiv.addEventListener('click', (e) => {
-                    const btn = e.target;
-                    if (!btn.classList.contains('qty-btn')) return;
-                    const variantRow = btn.closest('.variant-row');
-                    const variantId = variantRow.dataset.variantId;
-                    const price = parseFloat(variantRow.dataset.price);
-                    const itemId = itemDiv.dataset.itemId;
-                    const itemName = itemDiv.dataset.itemName;
-                    const variantName = variantRow.querySelector('.variant-name').textContent;
-                    const qtySpan = variantRow.querySelector('.qty-num');
-                    const cartKey = `${itemId}_${variantId}`;
-
-                    let currentQty = cart[cartKey] ? cart[cartKey].qty : 0;
-                    if (btn.classList.contains('qty-inc')) currentQty++;
-                    else if (btn.classList.contains('qty-dec')) currentQty = Math.max(0, currentQty - 1);
-
-                    if (currentQty === 0) delete cart[cartKey];
-                    else cart[cartKey] = { id: itemId, name: itemName, variantName, price, qty: currentQty };
-
-                    qtySpan.textContent = currentQty;
-                    // Bounce animation on quantity number
-                    qtySpan.classList.remove('bounce');
-                    void qtySpan.offsetWidth;
-                    qtySpan.classList.add('bounce');
-
-                    // Pulse the floating cart button
-                    const floatBtn = document.getElementById('cartFloat');
-                    floatBtn.classList.remove('pulse');
-                    void floatBtn.offsetWidth;
-                    floatBtn.classList.add('pulse');
-
-                    updateCartUI();
-                });
             });
 
             const cartFloat = document.getElementById('cartFloat');
@@ -486,7 +573,7 @@
                 cartTotalEl.textContent = items.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2);
                 cartItemsEl.innerHTML = items.map((item, idx) => `
                     <li>
-                        <span>${item.name}${item.variantName && item.variantName !== item.name ? ' (' + item.variantName + ')' : ''} × ${item.qty}</span>
+                        <span>${item.name}${item.variantName ? ' (' + item.variantName + ')' : ''} × ${item.qty}</span>
                         <span>₹${(item.price * item.qty).toFixed(2)}
                             <button class="remove-item" data-key="${Object.keys(cart)[idx]}">✕</button>
                         </span>
@@ -496,14 +583,22 @@
                     btn.addEventListener('click', (e) => {
                         const key = e.target.dataset.key;
                         delete cart[key];
-                        document.querySelectorAll('.qty-num').forEach(el => el.textContent = '0');
-                        Object.entries(cart).forEach(([k, v]) => {
-                            const [itemId, variantId] = k.split('_');
-                            const itemDiv = document.querySelector(`.item[data-item-id="${itemId}"]`);
-                            if (itemDiv) {
-                                const row = itemDiv.querySelector(`.variant-row[data-variant-id="${variantId}"]`);
-                                if (row) row.querySelector('.qty-num').textContent = v.qty;
+                        // Update quantity displays
+                        document.querySelectorAll('.item').forEach(itemDiv => {
+                            const itemId = itemDiv.dataset.itemId;
+                            const activeVariantIndex = selectedVariants[itemId] || 0;
+                            // get variant name
+                            const variantRow = itemDiv.querySelector('.variant-pill.selected');
+                            let variantName = '';
+                            if (variantRow) {
+                                variantName = variantRow.textContent.split(' ')[0].trim(); // rough but works
+                            } else {
+                                variantName = ''; // single variant
                             }
+                            const cartKey = `${itemId}_${variantName}`;
+                            const cartItem = cart[cartKey];
+                            const qtySpan = itemDiv.querySelector('.qty-num');
+                            qtySpan.textContent = cartItem ? cartItem.qty : 0;
                         });
                         updateCartUI();
                     });
@@ -534,6 +629,7 @@
                     document.getElementById('orderSuccess').textContent = '✅ Order placed! Waiting for confirmation…';
                     document.getElementById('orderSuccess').style.display = 'block';
 
+                    // Clear cart
                     for (const key in cart) delete cart[key];
                     document.querySelectorAll('.qty-num').forEach(el => el.textContent = '0');
                     updateCartUI();
