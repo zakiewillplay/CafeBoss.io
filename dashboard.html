@@ -38,7 +38,7 @@
         .stat-card .stat-label { font-size:0.7rem; opacity:0.7; margin-top:0.2rem; }
         .card { background:var(--card-bg); padding:1.3rem; border-radius:14px; margin-bottom:1.3rem; box-shadow:0 3px 10px rgba(0,0,0,0.3); animation: slideUp 0.4s ease; }
         @keyframes slideUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
-        .card h3 { color:var(--primary); margin-bottom:0.8rem; font-size:1rem; }
+        .card h3 { color:var(--primary); margin-bottom:0.8rem; font-size:1rem; display:inline; }
         .card h3 .badge { background:var(--primary); color:white; border-radius:12px; padding:0.15rem 0.5rem; font-size:0.7rem; margin-left:0.4rem; }
         .order-tabs { display:flex; gap:0.4rem; margin-bottom:1rem; flex-wrap:wrap; }
         .order-tab { background:transparent; border:1px solid var(--border); color:#aaa; padding:0.4rem 0.9rem; border-radius:20px; cursor:pointer; font-size:0.8rem; font-weight:500; transition:all 0.2s; }
@@ -176,8 +176,16 @@
         </div>
     </div>
 
-    <!-- Menu Items -->
-    <div class="card"><h3>📃 Menu Items</h3><div id="menuList"><p class="note">Loading...</p></div></div>
+    <!-- Menu Items (with Show/Hide toggle) -->
+    <div class="card">
+        <div class="collapsible-header" id="menuItemsToggle">
+            <h3>📃 Menu Items</h3><span>▼</span>
+        </div>
+        <div class="collapsed-content open" id="menuItemsSection">
+            <div id="menuList"><p class="note">Loading...</p></div>
+        </div>
+    </div>
+
     <footer>Cafe Boss © 2026 – Free Forever</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -201,7 +209,7 @@
             const {data:cafe,error:cafeErr}=await client.from('cafes').select('*').eq('owner_id',user.id).single();
             if(cafeErr||!cafe){alert('Cafe not found. Re-signup.');await client.auth.signOut();window.location.href='auth.html';return;}
 
-            // Collapsible sections
+            // Collapsible sections (also works for menu items toggle)
             document.querySelectorAll('.collapsible-header').forEach(h=>{
                 h.addEventListener('click',()=>{
                     const content=h.nextElementSibling;
