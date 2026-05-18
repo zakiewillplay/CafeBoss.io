@@ -16,6 +16,8 @@
             --glass: rgba(20, 10, 10, 0.65);
             --light-bg: #FEFAF0;
             --light-text: #2D1A0A;
+            --radius: 26px;
+            --shadow: 0 18px 40px rgba(0,0,0,0.4);
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
@@ -26,12 +28,19 @@
             overflow-x: hidden;
             transition: background 0.4s, color 0.4s;
         }
-        body.light-mode { background: var(--light-bg); color: var(--light-text); }
+        body.light-mode {
+            background: var(--light-bg);
+            color: var(--light-text);
+        }
         body::before {
             content: ""; position: fixed; inset:0; z-index:0;
             background: radial-gradient(circle at 20% 30%, rgba(212,175,55,0.15) 0%, transparent 50%),
                         radial-gradient(circle at 80% 70%, rgba(192,57,43,0.1) 0%, transparent 50%);
             transition: opacity 0.4s;
+        }
+        body.light-mode::before {
+            background: radial-gradient(circle at 20% 30%, rgba(212,175,55,0.22) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 70%, rgba(192,57,43,0.08) 0%, transparent 50%);
         }
 
         /* ----- FOOD REVEAL OVERLAY ----- */
@@ -112,9 +121,11 @@
         .header {
             text-align: center; margin-bottom: 2rem; padding: 2rem 1.2rem;
             background: var(--glass); backdrop-filter: blur(20px);
-            border: 1px solid rgba(212,175,55,0.5); border-radius: 26px;
+            border: 1px solid rgba(212,175,55,0.5); border-radius: var(--radius);
             box-shadow: 0 0 45px rgba(212,175,55,0.25);
+            animation: popIn 0.5s ease;
         }
+        @keyframes popIn { 0%{ transform: scale(0.92); opacity:0; } 100%{ transform: scale(1); opacity:1; } }
         .header h1 {
             font-family: 'Playfair Display', serif;
             font-size: 2.5rem; color: var(--gold);
@@ -125,7 +136,7 @@
         /* ----- CATEGORY TABS ----- */
         .tabs-sticky {
             position: sticky; top: 0.8rem; z-index:15;
-            backdrop-filter: blur(22px);
+            backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
             padding: 0.6rem 0; margin-bottom: 1.4rem;
             display: flex; gap: 0.5rem; overflow-x: auto;
         }
@@ -147,9 +158,9 @@
         /* ----- CATEGORY CARDS ----- */
         .category {
             background: var(--glass); backdrop-filter: blur(18px);
-            border: 1px solid rgba(212,175,55,0.3); border-radius: 26px;
+            border: 1px solid rgba(212,175,55,0.3); border-radius: var(--radius);
             padding: 1.5rem; margin-bottom: 1.8rem;
-            box-shadow: 0 18px 40px rgba(0,0,0,0.4);
+            box-shadow: var(--shadow);
             transition: transform 0.3s, box-shadow 0.3s;
         }
         .category:hover { transform: translateY(-4px); box-shadow: 0 24px 50px rgba(0,0,0,0.5); }
@@ -241,12 +252,12 @@
         #cartPreview h4 { font-family: 'Playfair Display', serif; color: var(--gold); margin-bottom: 0.8rem; font-size: 1.2rem; }
         #cartItems { list-style: none; margin: 0.5rem 0; }
         #cartItems li { display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.4rem; }
-        .remove-item { background: none; border: none; color: var(--gold); cursor: pointer; font-size: 1rem; }
+        .remove-item { background: none; border: none; color: var(--gold); cursor: pointer; font-size: 1rem; transition: transform 0.1s; }
         .remove-item:active { transform: scale(1.2); }
         .order-form-group { margin-top: 1rem; }
         .order-form-group label { display: block; margin-bottom: 0.3rem; font-size: 0.85rem; opacity: 0.8; }
         .order-form-group input { width: 100%; padding: 0.6rem; border-radius: 12px; border: 1px solid var(--gold); background: transparent; color: inherit; font-size: 0.9rem; }
-        #orderBtn { width: 100%; background: var(--gold); color: var(--dark); border: none; padding: 0.8rem; border-radius: 30px; font-weight: 700; font-size: 1rem; margin-top: 0.8rem; cursor: pointer; }
+        #orderBtn { width: 100%; background: var(--gold); color: var(--dark); border: none; padding: 0.8rem; border-radius: 30px; font-weight: 700; font-size: 1rem; margin-top: 0.8rem; cursor: pointer; transition: background 0.2s, transform 0.1s; }
         #orderBtn:active { transform: scale(0.96); }
         .success-message { text-align: center; color: var(--gold); font-weight: 600; margin-top: 0.5rem; display: none; }
 
@@ -281,7 +292,11 @@
             <h1 id="cafeTitle"></h1>
             <p id="cafeDesc"></p>
         </div>
-        <div class="tabs-sticky" id="categoryTabs"><span class="category-tab active" data-category="all">All</span></div>
+
+        <div class="tabs-sticky" id="categoryTabs">
+            <span class="category-tab active" data-category="all">All</span>
+        </div>
+
         <div id="menuList"></div>
         <button class="share-btn" id="shareMenuBtn">📤 Share this Menu</button>
     </div>
@@ -311,11 +326,17 @@
             themeToggle.textContent = document.body.classList.contains('light-mode') ? '🌙 Dark' : '🌓 Light';
         });
     </script>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module">
         const SUPABASE_URL = 'https://hhkuvffjjaglhutlxncm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhoa3V2ZmZqamFnbGh1dGx4bmNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTY3MzEsImV4cCI6MjA5NDY3MjczMX0.wbuGuK9hV9ie4afGuyximb7iK_g9dj9CVaXNY8guxDw';
-        const init = () => { if(typeof supabase==='undefined'){setTimeout(init,100);return;} window.client=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY); main(); };
+
+        const init = () => {
+            if (typeof supabase === 'undefined') { setTimeout(init, 100); return; }
+            window.client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            main();
+        };
         init();
 
         async function main() {
@@ -323,9 +344,12 @@
             const params = new URLSearchParams(window.location.search);
             const cafeId = params.get('id');
             if (!cafeId) { document.body.innerHTML = '<h2>Missing cafe ID</h2>'; return; }
+
             const { data: cafe, error } = await client.from('cafes').select('*').eq('id', cafeId).single();
             if (error || !cafe) { document.body.innerHTML = '<h2>Cafe not found</h2>'; return; }
+
             try { await client.from('menu_views_log').insert({ cafe_id: cafeId }); } catch(e) {}
+
             document.getElementById('cafeTitle').textContent = cafe.cafe_name || 'Menu';
             document.getElementById('cafeDesc').textContent = cafe.description || '';
 
@@ -339,14 +363,21 @@
             const tabsContainer = document.getElementById('categoryTabs');
             const sortedCats = Object.keys(grouped).sort();
             sortedCats.forEach(cat => {
-                const tab = document.createElement('span'); tab.className = 'category-tab'; tab.textContent = cat; tab.dataset.category = cat; tabsContainer.appendChild(tab);
+                const tab = document.createElement('span');
+                tab.className = 'category-tab';
+                tab.textContent = cat;
+                tab.dataset.category = cat;
+                tabsContainer.appendChild(tab);
             });
+
             tabsContainer.addEventListener('click', (e) => {
                 if (!e.target.classList.contains('category-tab')) return;
                 document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
                 e.target.classList.add('active');
                 const selected = e.target.dataset.category;
-                document.querySelectorAll('.category').forEach(cat => { cat.style.display = (selected === 'all' || cat.dataset.cat === selected) ? 'block' : 'none'; });
+                document.querySelectorAll('.category').forEach(cat => {
+                    cat.style.display = (selected === 'all' || cat.dataset.cat === selected) ? 'block' : 'none';
+                });
             });
 
             const menuList = document.getElementById('menuList');
@@ -354,75 +385,191 @@
             const selectedVariants = {};
 
             sortedCats.forEach(cat => {
-                const section = document.createElement('div'); section.className = 'category'; section.dataset.cat = cat;
+                const section = document.createElement('div');
+                section.className = 'category';
+                section.dataset.cat = cat;
                 section.innerHTML = `<h2 class="cat-title">${cat}</h2>`;
+
                 grouped[cat].forEach(item => {
-                    const itemDiv = document.createElement('div'); itemDiv.className = 'item';
-                    itemDiv.dataset.itemId = item.id; itemDiv.dataset.itemName = item.name;
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'item';
+                    itemDiv.dataset.itemId = item.id;
+                    itemDiv.dataset.itemName = item.name;
+
                     const hasVariants = item.description && item.description.startsWith('VAR::');
                     let variants = [];
-                    if (hasVariants) { item.description.replace('VAR::','').split('|').forEach(p => { const [n,pr] = p.split('='); variants.push({ name: n.trim(), price: parseFloat(pr) }); }); }
-                    else { variants.push({ name: '', price: parseFloat(item.price) }); }
+                    if (hasVariants) {
+                        item.description.replace('VAR::', '').split('|').forEach(p => {
+                            const [name, price] = p.split('=');
+                            variants.push({ name: name.trim(), price: parseFloat(price) });
+                        });
+                    } else {
+                        variants.push({ name: '', price: parseFloat(item.price) });
+                    }
+
                     selectedVariants[item.id] = 0;
+
                     const featuredBadge = item.featured ? '<span class="featured-badge">🔥 Chef\'s Special</span>' : '';
                     const itemDescHtml = (!hasVariants && item.description) ? `<div class="item-desc">${item.description}</div>` : '';
+
                     let variantPillsHtml = '';
                     if (variants.length > 1) {
                         variantPillsHtml = '<div class="variant-pills">';
-                        variants.forEach((v, idx) => { variantPillsHtml += `<span class="variant-pill ${idx===0?'selected':''}" data-index="${idx}">${v.name}<span class="pill-price">₹${v.price}</span></span>`; });
+                        variants.forEach((v, idx) => {
+                            variantPillsHtml += `<span class="variant-pill ${idx === 0 ? 'selected' : ''}" data-index="${idx}">${v.name}<span class="pill-price">₹${v.price}</span></span>`;
+                        });
                         variantPillsHtml += '</div>';
                     }
+
                     const singlePriceHtml = variants.length === 1 ? `<span style="color:var(--gold);font-weight:700;">₹${variants[0].price}</span>` : '';
-                    const qtyHtml = `<div class="qty-row"><button class="qty-btn qty-dec">−</button><span class="qty-num">0</span><button class="qty-btn qty-inc">+</button></div>`;
-                    itemDiv.innerHTML = `<div class="item-info"><div class="item-name">${item.name} ${featuredBadge}</div>${itemDescHtml}${variantPillsHtml}<div style="display:flex;align-items:center;justify-content:space-between;">${singlePriceHtml}</div></div>${qtyHtml}`;
+
+                    const qtyHtml = `
+                        <div class="qty-row">
+                            <button class="qty-btn qty-dec">−</button>
+                            <span class="qty-num">0</span>
+                            <button class="qty-btn qty-inc">+</button>
+                        </div>`;
+
+                    itemDiv.innerHTML = `
+                        <div class="item-info">
+                            <div class="item-name">${item.name} ${featuredBadge}</div>
+                            ${itemDescHtml}
+                            ${variantPillsHtml}
+                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                ${singlePriceHtml}
+                            </div>
+                        </div>
+                        ${qtyHtml}`;
+
+                    // Variant pill click
                     if (variants.length > 1) {
                         const pills = itemDiv.querySelectorAll('.variant-pill');
-                        pills.forEach(pill => { pill.addEventListener('click', (e) => { pills.forEach(p => p.classList.remove('selected')); pill.classList.add('selected'); const idx = parseInt(pill.dataset.index); selectedVariants[item.id] = idx; const qtySpan = itemDiv.querySelector('.qty-num'); const vKey = `${item.id}_${variants[idx].name}`; qtySpan.textContent = cart[vKey] ? cart[vKey].qty : 0; }); });
+                        pills.forEach(pill => {
+                            pill.addEventListener('click', (e) => {
+                                pills.forEach(p => p.classList.remove('selected'));
+                                pill.classList.add('selected');
+                                const idx = parseInt(pill.dataset.index);
+                                selectedVariants[item.id] = idx;
+                                const qtySpan = itemDiv.querySelector('.qty-num');
+                                const vKey = `${item.id}_${variants[idx].name}`;
+                                qtySpan.textContent = cart[vKey] ? cart[vKey].qty : 0;
+                            });
+                        });
                     }
-                    const qtyDec = itemDiv.querySelector('.qty-dec'), qtyInc = itemDiv.querySelector('.qty-inc'), qtySpan = itemDiv.querySelector('.qty-num');
+
+                    // Quantity buttons
+                    const qtyDec = itemDiv.querySelector('.qty-dec');
+                    const qtyInc = itemDiv.querySelector('.qty-inc');
+                    const qtySpan = itemDiv.querySelector('.qty-num');
+
                     const updateQty = (delta) => {
-                        const vIdx = selectedVariants[item.id] || 0; const v = variants[vIdx]; const cartKey = `${item.id}_${v.name}`;
-                        let cur = cart[cartKey] ? cart[cartKey].qty : 0; cur = Math.max(0, cur + delta);
-                        if (cur === 0) delete cart[cartKey]; else cart[cartKey] = { id: item.id, name: item.name, variantName: v.name, price: v.price, qty: cur };
+                        const vIdx = selectedVariants[item.id] || 0;
+                        const v = variants[vIdx];
+                        const cartKey = `${item.id}_${v.name}`;
+                        let cur = cart[cartKey] ? cart[cartKey].qty : 0;
+                        cur = Math.max(0, cur + delta);
+                        if (cur === 0) {
+                            delete cart[cartKey];
+                        } else {
+                            cart[cartKey] = { id: item.id, name: item.name, variantName: v.name, price: v.price, qty: cur };
+                        }
                         qtySpan.textContent = cur;
-                        qtySpan.classList.remove('bounce'); void qtySpan.offsetWidth; qtySpan.classList.add('bounce');
-                        const fb = document.getElementById('cartFloat'); fb.classList.remove('pulse'); void fb.offsetWidth; fb.classList.add('pulse');
+                        // Bounce
+                        qtySpan.classList.remove('bounce');
+                        void qtySpan.offsetWidth;
+                        qtySpan.classList.add('bounce');
+                        // Cart pulse
+                        const floatBtn = document.getElementById('cartFloat');
+                        floatBtn.classList.remove('pulse');
+                        void floatBtn.offsetWidth;
+                        floatBtn.classList.add('pulse');
                         updateCartUI();
                     };
+
                     qtyDec.addEventListener('click', () => updateQty(-1));
                     qtyInc.addEventListener('click', () => updateQty(1));
+
                     section.appendChild(itemDiv);
                 });
                 menuList.appendChild(section);
             });
 
-            const cartFloat = document.getElementById('cartFloat'), cartPreview = document.getElementById('cartPreview'), cartBadge = document.getElementById('cartBadge'), cartItemsEl = document.getElementById('cartItems'), cartTotalEl = document.getElementById('cartTotal');
+            const cartFloat = document.getElementById('cartFloat');
+            const cartPreview = document.getElementById('cartPreview');
+            const cartBadge = document.getElementById('cartBadge');
+            const cartItemsEl = document.getElementById('cartItems');
+            const cartTotalEl = document.getElementById('cartTotal');
             let cartVisible = false;
-            cartFloat.addEventListener('click', () => { cartVisible = !cartVisible; cartPreview.style.display = cartVisible ? 'block' : 'none'; });
+
+            cartFloat.addEventListener('click', () => {
+                cartVisible = !cartVisible;
+                cartPreview.style.display = cartVisible ? 'block' : 'none';
+            });
+
             function updateCartUI() {
                 const items = Object.values(cart);
-                cartBadge.textContent = items.reduce((s,i) => s + i.qty, 0);
-                cartTotalEl.textContent = items.reduce((s,i) => s + i.price*i.qty, 0).toFixed(2);
-                cartItemsEl.innerHTML = items.map((item, idx) => `<li><span>${item.name}${item.variantName ? ' ('+item.variantName+')' : ''} × ${item.qty}</span><span>₹${(item.price*item.qty).toFixed(2)}<button class="remove-item" data-key="${Object.keys(cart)[idx]}">✕</button></span></li>`).join('');
-                document.querySelectorAll('.remove-item').forEach(btn => { btn.addEventListener('click', (e) => { const key = e.target.dataset.key; delete cart[key]; document.querySelectorAll('.item').forEach(itemDiv => { const itemId = itemDiv.dataset.itemId; const vIdx = selectedVariants[itemId]||0; const pills = itemDiv.querySelectorAll('.variant-pill'); let vName = ''; if (pills.length) { const active = itemDiv.querySelector('.variant-pill.selected'); if (active) vName = active.textContent.split(' ')[0].trim(); } else { vName = ''; } const ck = `${itemId}_${vName}`; itemDiv.querySelector('.qty-num').textContent = cart[ck] ? cart[ck].qty : 0; }); updateCartUI(); }); });
+                cartBadge.textContent = items.reduce((s, i) => s + i.qty, 0);
+                cartTotalEl.textContent = items.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2);
+                cartItemsEl.innerHTML = items.map((item, idx) => `
+                    <li>
+                        <span>${item.name}${item.variantName ? ' (' + item.variantName + ')' : ''} × ${item.qty}</span>
+                        <span>₹${(item.price * item.qty).toFixed(2)}
+                            <button class="remove-item" data-key="${Object.keys(cart)[idx]}">✕</button>
+                        </span>
+                    </li>
+                `).join('');
+                document.querySelectorAll('.remove-item').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const key = e.target.dataset.key;
+                        delete cart[key];
+                        // Update quantity displays
+                        document.querySelectorAll('.item').forEach(itemDiv => {
+                            const itemId = itemDiv.dataset.itemId;
+                            const vIdx = selectedVariants[itemId] || 0;
+                            const pills = itemDiv.querySelectorAll('.variant-pill');
+                            let vName = '';
+                            if (pills.length) {
+                                const active = itemDiv.querySelector('.variant-pill.selected');
+                                if (active) vName = active.textContent.split(' ')[0].trim();
+                            } else {
+                                vName = '';
+                            }
+                            const ck = `${itemId}_${vName}`;
+                            itemDiv.querySelector('.qty-num').textContent = cart[ck] ? cart[ck].qty : 0;
+                        });
+                        updateCartUI();
+                    });
+                });
             }
 
+            // Place order & wait for acceptance
             document.getElementById('orderBtn').addEventListener('click', async () => {
                 const items = Object.values(cart);
                 if (items.length === 0) return alert('Cart is empty');
                 const tableNumber = document.getElementById('tableNumber').value.trim();
                 if (!tableNumber) return alert('Please enter your table number');
                 const customerName = document.getElementById('customerName').value.trim() || 'Guest';
-                const total = items.reduce((s,i) => s + i.price*i.qty, 0).toFixed(2);
+                const total = items.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2);
+
                 try {
-                    const { data: newOrder, error } = await client.from('orders').insert({ cafe_id: cafeId, customer_name: customerName, table_number: tableNumber, items: items.map(i => ({ name: i.name, variant: i.variantName||'', price: i.price, qty: i.qty })), total: parseFloat(total), status: 'new' }).select('id').single();
+                    const { data: newOrder, error } = await client.from('orders').insert({
+                        cafe_id: cafeId,
+                        customer_name: customerName,
+                        table_number: tableNumber,
+                        items: items.map(i => ({ name: i.name, variant: i.variantName || '', price: i.price, qty: i.qty })),
+                        total: parseFloat(total),
+                        status: 'new'
+                    }).select('id').single();
                     if (error) throw error;
+
                     const orderId = newOrder.id;
                     document.getElementById('orderSuccess').textContent = '✅ Order placed! Waiting for confirmation…';
                     document.getElementById('orderSuccess').style.display = 'block';
+
                     for (const key in cart) delete cart[key];
                     document.querySelectorAll('.qty-num').forEach(el => el.textContent = '0');
                     updateCartUI();
+
                     let pollInterval = setInterval(async () => {
                         const { data: order } = await client.from('orders').select('status').eq('id', orderId).single();
                         if (order && order.status === 'accepted') {
@@ -431,12 +578,27 @@
                             document.getElementById('orderSuccess').style.color = '#4CAF50';
                             if (Notification.permission === 'default') await Notification.requestPermission();
                             if (Notification.permission === 'granted') new Notification('Order Accepted!', { body: 'Your order has been accepted by the cafe.', icon: cafe.logo_url || '' });
-                            setTimeout(() => { cartPreview.style.display = 'none'; cartVisible = false; document.getElementById('orderSuccess').style.display = 'none'; }, 4000);
+                            setTimeout(() => {
+                                cartPreview.style.display = 'none';
+                                cartVisible = false;
+                                document.getElementById('orderSuccess').style.display = 'none';
+                            }, 4000);
                         }
                     }, 5000);
-                } catch (err) { alert('Order failed. Please try again.'); console.error(err); }
+                } catch (err) {
+                    alert('Order failed. Please try again.');
+                    console.error(err);
+                }
             });
-            document.getElementById('shareMenuBtn').addEventListener('click', () => { const url = window.location.href; if (navigator.share) navigator.share({ title: cafe.cafe_name, text: 'Check out our menu!', url }).catch(() => {}); else navigator.clipboard.writeText(url).then(() => alert('Menu link copied!')).catch(() => {}); });
+
+            document.getElementById('shareMenuBtn').addEventListener('click', () => {
+                const url = window.location.href;
+                if (navigator.share) {
+                    navigator.share({ title: cafe.cafe_name, text: 'Check out our menu!', url }).catch(() => {});
+                } else {
+                    navigator.clipboard.writeText(url).then(() => alert('Menu link copied!')).catch(() => {});
+                }
+            });
         }
     </script>
 </body>
