@@ -270,6 +270,24 @@
             const {data:cafe,error:cafeErr}=await client.from('cafes').select('*').eq('owner_id',user.id).single();
             if(cafeErr||!cafe){alert('Cafe not found. Re-signup.');await client.auth.signOut();window.location.href='auth.html';return;}
 
+            // ---------- GLOBAL AUDIO INIT (fixes missing sound when notification permission already granted) ----------
+            function initAudioContext() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }
+            // The first click anywhere on the page will unlock audio
+            document.addEventListener('click', function audioUnlock() {
+                initAudioContext();
+                // Once the context is running, remove this listener
+                if (audioCtx && audioCtx.state === 'running') {
+                    document.removeEventListener('click', audioUnlock);
+                }
+            });
+
             // Collapsible sections
             document.querySelectorAll('.collapsible-header').forEach(h=>{
                 h.addEventListener('click',()=>{
@@ -377,12 +395,7 @@
 
             async function enableNotifications() {
                 // Create/resume AudioContext IMMEDIATELY while user gesture is active
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === 'suspended') {
-                    await audioCtx.resume();
-                }
+                initAudioContext();
                 // Now ask for notification permission
                 await Notification.requestPermission();
                 notifBtn.style.display = 'none';
@@ -392,7 +405,7 @@
                 notifBtn.style.display = 'inline-block';
                 notifBtn.addEventListener('click', enableNotifications);
             } else if (Notification.permission === 'granted') {
-                // Audio context will be created on first order after a user gesture
+                // Audio context will be created on first click (see global listener)
             }
 
             // Supabase Realtime for instant order updates
