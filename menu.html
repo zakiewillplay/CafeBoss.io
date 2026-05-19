@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes"/>
     <title>Royal Menu</title>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- GSAP for staggered animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <style>
         :root {
             --gold: #E5C158;
@@ -59,7 +61,7 @@
         /* Theme toggle */
         .theme-toggle {
             position: fixed; top:1.2rem; right:1.2rem; z-index:30;
-            background: rgba(20,18,15,0.8); backdrop-filter: blur(20px);
+            background: var(--card-bg); backdrop-filter: blur(20px);
             border:1px solid var(--gold); color:var(--gold);
             padding:0.6rem 1.2rem; border-radius:30px; cursor:pointer;
             font-size:0.85rem; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,0.5);
@@ -67,7 +69,7 @@
 
         /* Header */
         .header {
-            text-align: center; margin-bottom: 2rem; padding: 2.5rem 1.5rem;
+            text-align: center; margin-bottom: 1.5rem; padding: 2rem 1.5rem;
             background: var(--card-bg); backdrop-filter: blur(24px);
             border: 1px solid rgba(229,193,88,0.4); border-radius: var(--radius);
             box-shadow: 0 0 60px rgba(229,193,88,0.15);
@@ -82,11 +84,46 @@
         }
         .header p { font-size: 1.1rem; opacity: 0.8; margin-top: 0.4rem; color: var(--gold-light); font-style: italic; }
 
-        /* Category tabs – underlined style */
+        /* Search Bar */
+        .search-container {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .search-container input {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            background: var(--card-bg);
+            border: 1px solid rgba(229,193,88,0.4);
+            border-radius: 40px;
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(12px);
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+        }
+        .search-container input::placeholder {
+            color: rgba(229,193,88,0.5);
+        }
+        .search-container input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 20px rgba(229,193,88,0.3);
+        }
+
+        /* Category tabs – sticky, underlined style */
         .tabs-sticky {
-            position: sticky; top: 0.8rem; z-index:15;
-            backdrop-filter: blur(25px); padding: 0.8rem 0; margin-bottom: 1.5rem;
-            display: flex; gap: 1rem; overflow-x: auto; border-bottom: 1px solid rgba(229,193,88,0.3);
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            z-index: 15;
+            background: rgba(10,8,6,0.85);
+            backdrop-filter: blur(25px);
+            padding: 0.8rem 0;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(229,193,88,0.3);
         }
         .category-tab {
             background: none; border: none; color: rgba(229,193,88,0.7);
@@ -109,14 +146,8 @@
             border: 1px solid rgba(229,193,88,0.3); border-radius: var(--radius);
             padding: 1.8rem; margin-bottom: 2rem;
             box-shadow: 0 20px 45px rgba(0,0,0,0.5);
-            opacity: 0; animation: cardReveal 0.5s ease forwards;
+            display: block; /* all categories visible; search hides/show items */
         }
-        .category:nth-child(1) { animation-delay: 0.1s; }
-        .category:nth-child(2) { animation-delay: 0.2s; }
-        .category:nth-child(3) { animation-delay: 0.3s; }
-        .category:nth-child(4) { animation-delay: 0.4s; }
-        .category:nth-child(5) { animation-delay: 0.5s; }
-        @keyframes cardReveal { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
         .cat-title {
             font-family: 'Libre Baskerville', serif;
             color: var(--gold); font-size: 1.8rem;
@@ -129,12 +160,8 @@
             display: flex; align-items: flex-start; justify-content: space-between;
             padding: 1.2rem 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.05);
             border-radius: 14px; transition: background 0.2s, transform 0.2s;
-            opacity: 0; animation: itemPop 0.4s ease forwards;
+            opacity: 0; /* hidden initially for GSAP */
         }
-        .item:nth-child(1) { animation-delay: 0.1s; } .item:nth-child(2) { animation-delay: 0.15s; }
-        .item:nth-child(3) { animation-delay: 0.2s; } .item:nth-child(4) { animation-delay: 0.25s; }
-        .item:nth-child(5) { animation-delay: 0.3s; } .item:nth-child(6) { animation-delay: 0.35s; }
-        @keyframes itemPop { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
         .item:hover { background: rgba(229,193,88,0.06); transform: translateX(4px); }
         .item-info { flex: 1; min-width: 0; }
         .item-name { font-family: 'Libre Baskerville', serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.2rem; color: #fff; }
@@ -206,6 +233,7 @@
     </style>
 </head>
 <body>
+    <!-- Page loader -->
     <div class="page-loader" id="pageLoader"><div class="loader-plate"></div></div>
     <button class="theme-toggle" id="themeToggle">🌓 Light</button>
 
@@ -215,6 +243,12 @@
             <p id="cafeDesc"></p>
         </div>
 
+        <!-- Real‑time search bar -->
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="🔍 Search menu…" autocomplete="off" />
+        </div>
+
+        <!-- Sticky category tabs -->
         <div class="tabs-sticky" id="categoryTabs">
             <span class="category-tab active" data-category="all">All</span>
         </div>
@@ -223,6 +257,7 @@
         <button class="share-btn" id="shareMenuBtn">📤 Share this Menu</button>
     </div>
 
+    <!-- Floating cart -->
     <div id="cartFloat">🛒 <span id="cartBadge">0</span></div>
     <div id="cartPreview">
         <h4>Your Order</h4>
@@ -281,6 +316,7 @@
                 grouped[item.category].push(item);
             });
 
+            // Build category tabs
             const tabsContainer = document.getElementById('categoryTabs');
             const sortedCats = Object.keys(grouped).sort();
             sortedCats.forEach(cat => {
@@ -291,20 +327,32 @@
                 tabsContainer.appendChild(tab);
             });
 
+            // Tab switching + re‑animate
             tabsContainer.addEventListener('click', (e) => {
                 if (!e.target.classList.contains('category-tab')) return;
                 document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
                 e.target.classList.add('active');
                 const selected = e.target.dataset.category;
-                document.querySelectorAll('.category').forEach(cat => {
-                    cat.style.display = (selected === 'all' || cat.dataset.cat === selected) ? 'block' : 'none';
+                // Show/hide categories and animate visible ones
+                const allCategories = document.querySelectorAll('.category');
+                allCategories.forEach(cat => {
+                    if (selected === 'all' || cat.dataset.cat === selected) {
+                        cat.style.display = 'block';
+                    } else {
+                        cat.style.display = 'none';
+                    }
                 });
+                // Also re‑filter for search text
+                filterItems();
+                // Staggered animation on newly visible items
+                animateVisibleItems();
             });
 
             const menuList = document.getElementById('menuList');
             const cart = {};
             const selectedVariants = {};
 
+            // Render all items into category sections
             sortedCats.forEach(cat => {
                 const section = document.createElement('div');
                 section.className = 'category';
@@ -316,6 +364,8 @@
                     itemDiv.className = 'item';
                     itemDiv.dataset.itemId = item.id;
                     itemDiv.dataset.itemName = item.name;
+                    // Store searchable text in dataset
+                    itemDiv.dataset.searchText = `${item.name} ${item.description || ''} ${item.category}`.toLowerCase();
 
                     const hasVariants = item.description && item.description.startsWith('VAR::');
                     let variants = [];
@@ -329,7 +379,7 @@
                     }
 
                     selectedVariants[item.id] = 0;
-                    const featuredBadge = item.featured ? '<span style="background:linear-gradient(135deg,var(--gold),#b8922e);color:#0A0806;font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:14px;font-weight:700;text-transform:uppercase;margin-left:0.5rem;">🔥 Chef\'s Special</span>' : '';
+                    const featuredBadge = item.featured ? `<span style="background:linear-gradient(135deg,var(--gold),#b8922e);color:#0A0806;font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:14px;font-weight:700;text-transform:uppercase;margin-left:0.5rem;">🔥 Chef's Special</span>` : '';
                     const itemDescHtml = (!hasVariants && item.description) ? `<div class="item-desc">${item.description}</div>` : '';
 
                     let variantPillsHtml = '';
@@ -347,6 +397,7 @@
 
                     itemDiv.innerHTML = `<div class="item-info"><div class="item-name">${item.name}${featuredBadge}</div>${itemDescHtml}${variantPillsHtml}<div style="display:flex;align-items:center;justify-content:space-between;">${singlePriceHtml}</div></div>${qtyHtml}`;
 
+                    // Variant pills
                     if (variants.length > 1) {
                         const pills = itemDiv.querySelectorAll('.variant-pill');
                         pills.forEach(pill => {
@@ -362,6 +413,7 @@
                         });
                     }
 
+                    // Quantity buttons
                     const qtyDec = itemDiv.querySelector('.qty-dec');
                     const qtyInc = itemDiv.querySelector('.qty-inc');
                     const qtySpan = itemDiv.querySelector('.qty-num');
@@ -387,6 +439,70 @@
                 menuList.appendChild(section);
             });
 
+            // ----- Real‑time search -----
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', filterItems);
+
+            function filterItems() {
+                const query = searchInput.value.toLowerCase().trim();
+                const allItems = document.querySelectorAll('.item');
+                allItems.forEach(item => {
+                    const searchText = item.dataset.searchText || '';
+                    const matches = query === '' || searchText.includes(query);
+                    item.style.display = matches ? 'flex' : 'none';
+                });
+                // Update category visibility: hide category if all items inside are hidden
+                const allCategories = document.querySelectorAll('.category');
+                allCategories.forEach(cat => {
+                    const visibleItems = cat.querySelectorAll('.item[style*="display: flex"], .item:not([style*="display"])');
+                    // Need to check computed style actually, but easier: count items where display != none
+                    let hasVisible = false;
+                    const itemsInCat = cat.querySelectorAll('.item');
+                    itemsInCat.forEach(item => {
+                        if (item.style.display !== 'none') hasVisible = true;
+                    });
+                    cat.style.display = hasVisible ? 'block' : 'none';
+                });
+                // Animate visible items after filtering
+                animateVisibleItems();
+            }
+
+            // ----- GSAP Staggered Animations -----
+            function animateVisibleItems() {
+                // Select items that are currently visible (display not none) and whose parent category is visible
+                const visibleItems = document.querySelectorAll('.category[style*="display: block"] .item[style*="display: flex"], .category[style*="display: block"] .item:not([style*="display"])');
+                // Fallback for categories without inline style
+                const allCats = document.querySelectorAll('.category');
+                let itemsToAnimate = [];
+                allCats.forEach(cat => {
+                    if (cat.style.display !== 'none') {
+                        const items = cat.querySelectorAll('.item');
+                        items.forEach(item => {
+                            if (item.style.display !== 'none') itemsToAnimate.push(item);
+                        });
+                    }
+                });
+                // Reset opacity for GSAP (they start at 0 due to CSS, GSAP will animate to 1)
+                gsap.set(itemsToAnimate, { opacity: 0, y: 20 });
+                gsap.to(itemsToAnimate, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.4,
+                    stagger: 0.06,
+                    ease: "power2.out"
+                });
+            }
+
+            // Initial animation after load + when first visible
+            window.addEventListener('menuReady', () => {
+                animateVisibleItems();
+            });
+            // Fire after DOM is built (slight delay)
+            setTimeout(() => {
+                window.dispatchEvent(new Event('menuReady'));
+            }, 100);
+
+            // Cart UI (unchanged)
             const cartFloat = document.getElementById('cartFloat');
             const cartPreview = document.getElementById('cartPreview');
             const cartBadge = document.getElementById('cartBadge');
@@ -453,6 +569,9 @@
                 if (navigator.share) { navigator.share({ title: cafe.cafe_name, text: 'Check out our menu!', url }).catch(() => {}); }
                 else { navigator.clipboard.writeText(url).then(() => alert('Menu link copied!')).catch(() => {}); }
             });
+
+            // Initial call to set up search and animation
+            filterItems();
         }
     </script>
 </body>
