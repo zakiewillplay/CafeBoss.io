@@ -203,7 +203,7 @@
         let currentOrderTab = 'new';
         let allOrders = [];
         let analyticsChart = null;
-        let audioCtx = null;   // Shared audio context for order sounds
+        let audioCtx = null;
 
         // Language strings
         const t = {
@@ -376,14 +376,16 @@
             const notifBtn = document.getElementById('requestNotificationPermissionBtn');
 
             async function enableNotifications() {
-                await Notification.requestPermission();
-                notifBtn.style.display = 'none';
+                // Create/resume AudioContext IMMEDIATELY while user gesture is active
                 if (!audioCtx) {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 }
                 if (audioCtx.state === 'suspended') {
                     await audioCtx.resume();
                 }
+                // Now ask for notification permission
+                await Notification.requestPermission();
+                notifBtn.style.display = 'none';
             }
 
             if (Notification.permission === 'default') {
@@ -582,7 +584,7 @@
             };
             await loadCategories();
 
-            // Smart Menu Builder (OCR) – unchanged
+            // Smart Menu Builder (OCR)
             const cameraInput = document.getElementById('cameraInput');
             const galleryInput = document.getElementById('galleryInput');
             const imagePreview = document.getElementById('imagePreview');
