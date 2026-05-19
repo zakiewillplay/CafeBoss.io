@@ -32,9 +32,11 @@
         .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.8rem; background:var(--card-bg); padding:1rem 1.5rem; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.3); }
         .header h1 { color:var(--primary); font-size:1.4rem; }
         .header-right { display:flex; align-items:center; gap:1rem; }
-        .btn-logout { background:none; border:1px solid var(--primary); color:var(--primary); padding:0.4rem 1rem; border-radius:20px; cursor:pointer; font-size:0.85rem; }
+        .btn-logout { background:none; border:1px solid var(--primary); color:var(--primary); padding:0.4rem 1rem; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:background 0.2s; }
+        .btn-logout:hover { background:var(--primary); color:white; }
         .stats-row { display:flex; gap:0.8rem; margin-bottom:1.5rem; flex-wrap:wrap; }
-        .stat-card { flex:1; min-width:90px; background:var(--card-bg); padding:0.9rem; border-radius:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); }
+        .stat-card { flex:1; min-width:90px; background:var(--card-bg); padding:0.9rem; border-radius:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); transition:transform 0.2s; }
+        .stat-card:hover { transform:translateY(-3px); }
         .stat-card .stat-value { font-size:1.5rem; font-weight:700; color:var(--primary); }
         .stat-card .stat-label { font-size:0.7rem; opacity:0.7; margin-top:0.2rem; }
         .card { background:var(--card-bg); padding:1.3rem; border-radius:14px; margin-bottom:1.3rem; box-shadow:0 3px 10px rgba(0,0,0,0.3); animation: slideUp 0.4s ease; }
@@ -192,8 +194,6 @@
 
     <footer>Cafe Boss © 2026 – Free Forever</footer>
 
-    <!-- Sound alert is now generated via Web Audio API – no external file needed -->
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script type="module">
@@ -203,6 +203,7 @@
         let currentOrderTab = 'new';
         let allOrders = [];
         let analyticsChart = null;
+        let audioCtx = null;   // Shared audio context for order sounds
 
         // Language strings
         const t = {
@@ -309,7 +310,7 @@
                 navigator.clipboard.writeText(url).then(() => alert('Menu link copied!')).catch(() => {});
             });
 
-            // ---------- ORDERS ----------
+            // ---------- ORDERS (with Realtime) ----------
             const loadAllOrders = async () => {
                 const {data}=await client.from('orders').select('*').eq('cafe_id',cafe.id).order('created_at',{ascending:false}).limit(80);
                 allOrders=data||[];
@@ -370,18 +371,49 @@
                 document.querySelectorAll('.order-tab').forEach(x=>x.classList.remove('active'));
                 this.classList.add('active'); currentOrderTab=this.dataset.tab; renderOrderTab();
             }));
-            const notifBtn=document.getElementById('requestNotificationPermissionBtn');
-            if(Notification.permission==='default'){notifBtn.style.display='inline-block';notifBtn.addEventListener('click',async()=>{await Notification.requestPermission();notifBtn.style.display='none';});}
-            let lastCheck=new Date().toISOString();
-            setInterval(async()=>{
-                const {data}=await client.from('orders').select('*').eq('cafe_id',cafe.id).gt('created_at',lastCheck);
-                if(data&&data.length){
-                    lastCheck=new Date().toISOString();
-                    if(Notification.permission==='granted')new Notification('New Order!',{body:`Table ${data[0].table_number} – ₹${data[0].total}`});
 
-                    // Web Audio beep (reliable, no external file)
+            // Notifications + audio context
+            const notifBtn = document.getElementById('requestNotificationPermissionBtn');
+
+            async function enableNotifications() {
+                await Notification.requestPermission();
+                notifBtn.style.display = 'none';
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+            }
+
+            if (Notification.permission === 'default') {
+                notifBtn.style.display = 'inline-block';
+                notifBtn.addEventListener('click', enableNotifications);
+            } else if (Notification.permission === 'granted') {
+                // Audio context will be created on first order after a user gesture
+            }
+
+            // Supabase Realtime for instant order updates
+            client
+              .channel('orders-channel')
+              .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'orders',
+                filter: `cafe_id=eq.${cafe.id}`
+              }, (payload) => {
+                const newOrder = payload.new;
+                allOrders.unshift(newOrder);
+                renderOrderTab();
+                document.getElementById('totalOrders').textContent = allOrders.length;
+                if (Notification.permission === 'granted') {
+                    new Notification('New Order!', {
+                        body: `Table ${newOrder.table_number} – ₹${newOrder.total}`,
+                        icon: cafe.logo_url || ''
+                    });
+                }
+                if (audioCtx && audioCtx.state === 'running') {
                     try {
-                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioCtx.createOscillator();
                         const gainNode = audioCtx.createGain();
                         oscillator.connect(gainNode);
@@ -392,10 +424,10 @@
                         oscillator.start(audioCtx.currentTime);
                         oscillator.stop(audioCtx.currentTime + 0.15);
                     } catch (e) {}
-
-                    loadAllOrders();
                 }
-            },30000);
+              })
+              .subscribe();
+
             await loadAllOrders();
 
             // ---------- ANALYTICS CHART ----------
@@ -550,7 +582,7 @@
             };
             await loadCategories();
 
-            // Smart Menu Builder (OCR)
+            // Smart Menu Builder (OCR) – unchanged
             const cameraInput = document.getElementById('cameraInput');
             const galleryInput = document.getElementById('galleryInput');
             const imagePreview = document.getElementById('imagePreview');
