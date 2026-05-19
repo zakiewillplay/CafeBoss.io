@@ -34,6 +34,7 @@
         .header-right { display:flex; align-items:center; gap:1rem; }
         .btn-logout { background:none; border:1px solid var(--primary); color:var(--primary); padding:0.4rem 1rem; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:background 0.2s; }
         .btn-logout:hover { background:var(--primary); color:white; }
+        .btn-unmute { background:var(--warning); color:white; border:none; padding:0.4rem 1rem; border-radius:20px; cursor:pointer; font-size:0.8rem; font-weight:600; display:none; }
         .stats-row { display:flex; gap:0.8rem; margin-bottom:1.5rem; flex-wrap:wrap; }
         .stat-card { flex:1; min-width:90px; background:var(--card-bg); padding:0.9rem; border-radius:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); transition:transform 0.2s; }
         .stat-card:hover { transform:translateY(-3px); }
@@ -87,6 +88,8 @@
                 <option value="en">English</option>
                 <option value="hi">हिन्दी</option>
             </select>
+            <!-- Unmute button (visible until audio is unlocked) -->
+            <button class="btn-unmute" id="unmuteBtn">🔊 Unmute</button>
             <button class="btn-logout" id="logoutBtn">Logout</button>
         </div>
     </div>
@@ -270,7 +273,9 @@
             const {data:cafe,error:cafeErr}=await client.from('cafes').select('*').eq('owner_id',user.id).single();
             if(cafeErr||!cafe){alert('Cafe not found. Re-signup.');await client.auth.signOut();window.location.href='auth.html';return;}
 
-            // ---------- GLOBAL AUDIO INIT (fixes missing sound when notification permission already granted) ----------
+            // ---------- Audio unlock with unmute button ----------
+            const unmuteBtn = document.getElementById('unmuteBtn');
+            
             function initAudioContext() {
                 if (!audioCtx) {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -278,15 +283,24 @@
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume();
                 }
-            }
-            // The first click anywhere on the page will unlock audio
-            document.addEventListener('click', function audioUnlock() {
-                initAudioContext();
-                // Once the context is running, remove this listener
-                if (audioCtx && audioCtx.state === 'running') {
-                    document.removeEventListener('click', audioUnlock);
+                // Hide the unmute button once audio is running
+                if (audioCtx.state === 'running') {
+                    unmuteBtn.style.display = 'none';
                 }
+            }
+
+            // Show unmute button if audio isn't ready
+            if (!audioCtx || audioCtx.state !== 'running') {
+                unmuteBtn.style.display = 'inline-block';
+            }
+            unmuteBtn.addEventListener('click', () => {
+                initAudioContext();
             });
+
+            // Also allow any click on the document to unlock audio
+            document.addEventListener('click', () => {
+                initAudioContext();
+            }, { once: false });
 
             // Collapsible sections
             document.querySelectorAll('.collapsible-header').forEach(h=>{
@@ -390,22 +404,16 @@
                 this.classList.add('active'); currentOrderTab=this.dataset.tab; renderOrderTab();
             }));
 
-            // Notifications + audio context
+            // Notifications
             const notifBtn = document.getElementById('requestNotificationPermissionBtn');
-
             async function enableNotifications() {
-                // Create/resume AudioContext IMMEDIATELY while user gesture is active
-                initAudioContext();
-                // Now ask for notification permission
+                initAudioContext();  // also unlock audio
                 await Notification.requestPermission();
                 notifBtn.style.display = 'none';
             }
-
             if (Notification.permission === 'default') {
                 notifBtn.style.display = 'inline-block';
                 notifBtn.addEventListener('click', enableNotifications);
-            } else if (Notification.permission === 'granted') {
-                // Audio context will be created on first click (see global listener)
             }
 
             // Supabase Realtime for instant order updates
