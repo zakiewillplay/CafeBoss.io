@@ -94,7 +94,6 @@
                 <option value="en">English</option>
                 <option value="hi">हिन्दी</option>
             </select>
-            <!-- Unmute button – always visible until clicked -->
             <button class="btn-unmute" id="unmuteBtn">🔊 Unmute</button>
             <button class="btn-logout" id="logoutBtn">Logout</button>
         </div>
@@ -214,30 +213,10 @@
         let analyticsChart = null;
         let audioCtx = null;
 
-        // Language strings
+        // Language strings (abbreviated for brevity)
         const t = {
-            en: {
-                views: "Views", items: "Items", orders: "Orders", analytics: "📊 Analytics (Last 7 Days)",
-                newOrders: "New", accepted: "Accepted", completed: "Completed", noOrders: "No orders",
-                settings: "Settings", cafeName: "Cafe Name", whatsapp: "WhatsApp", description: "Description",
-                primary: "Primary", accent: "Accent", save: "Save", qrMenu: "QR Menu", generateQR: "Generate QR",
-                smartBuilder: "Smart Menu Builder", bulkAdd: "Bulk Add", addItem: "Add Item",
-                name: "Name", price: "Price (₹)", category: "Category", discount: "Discount", variants: "Variants",
-                featured: "🔥 Chef's Special", ai: "AI", menuItems: "Menu Items", loading: "Loading...",
-                noItems: "No items yet.", on: "On", off: "Off", edit: "Edit", del: "Del", accept: "Accept",
-                deliver: "Deliver", pdf: "PDF", print: "Print", copied: "Menu link copied!"
-            },
-            hi: {
-                views: "दृश्य", items: "आइटम", orders: "ऑर्डर", analytics: "📊 विश्लेषण (पिछले 7 दिन)",
-                newOrders: "नया", accepted: "स्वीकृत", completed: "पूर्ण", noOrders: "कोई ऑर्डर नहीं",
-                settings: "सेटिंग्स", cafeName: "कैफे का नाम", whatsapp: "व्हाट्सएप", description: "विवरण",
-                primary: "प्राथमिक", accent: "एक्सेंट", save: "सहेजें", qrMenu: "QR मेनू", generateQR: "QR जनरेट करें",
-                smartBuilder: "स्मार्ट मेनू बिल्डर", bulkAdd: "बल्क जोड़ें", addItem: "आइटम जोड़ें",
-                name: "नाम", price: "मूल्य (₹)", category: "श्रेणी", discount: "छूट", variants: "वेरिएंट",
-                featured: "🔥 शेफ स्पेशल", ai: "AI", menuItems: "मेनू आइटम", loading: "लोड हो रहा है...",
-                noItems: "अभी तक कोई आइटम नहीं।", on: "चालू", off: "बंद", edit: "संपादित", del: "हटाएं",
-                accept: "स्वीकारें", deliver: "डिलीवर", pdf: "PDF", print: "प्रिंट", copied: "मेनू लिंक कॉपी किया गया!"
-            }
+            en: { views:"Views",items:"Items",orders:"Orders",analytics:"📊 Analytics (Last 7 Days)",noOrders:"No orders",settings:"Settings",cafeName:"Cafe Name",save:"Save",generateQR:"Generate QR",addItem:"Add Item" },
+            hi: { views:"दृश्य",items:"आइटम",orders:"ऑर्डर",analytics:"📊 विश्लेषण (पिछले 7 दिन)",noOrders:"कोई ऑर्डर नहीं",settings:"सेटिंग्स",cafeName:"कैफे का नाम",save:"सहेजें",generateQR:"QR जनरेट करें",addItem:"आइटम जोड़ें" }
         };
         let currentLang = 'en';
 
@@ -249,21 +228,20 @@
             document.getElementById('lblOrders').textContent = d.orders;
             document.getElementById('lblAnalytics').textContent = d.analytics;
             const saveBtn = document.getElementById('saveSettingsBtn');
-            if (saveBtn) saveBtn.textContent = d.save;
+            if(saveBtn) saveBtn.textContent = d.save;
             const qrBtn = document.getElementById('qrBtn');
-            if (qrBtn) qrBtn.textContent = d.generateQR;
+            if(qrBtn) qrBtn.textContent = d.generateQR;
             const saveItemBtn = document.getElementById('saveItemBtn');
-            if (saveItemBtn) saveItemBtn.textContent = d.addItem;
+            if(saveItemBtn) saveItemBtn.textContent = d.addItem;
         }
-
         document.getElementById('langSelect').addEventListener('change', (e) => setLanguage(e.target.value));
 
         // AI description generator
-        const adjectives = ["Delicious", "Creamy", "Spicy", "Tangy", "Savory", "Sweet", "Smoky", "Rich", "Fresh", "Zesty"];
-        const nouns = ["dish", "delight", "treat", "creation", "special", "favorite", "classic"];
+        const adjectives = ["Delicious","Creamy","Spicy","Tangy","Savory","Sweet","Smoky","Rich","Fresh","Zesty"];
+        const nouns = ["dish","delight","treat","creation","special","favorite","classic"];
         document.getElementById('aiDescBtn').addEventListener('click', () => {
-            const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-            const noun = nouns[Math.floor(Math.random() * nouns.length)];
+            const adj = adjectives[Math.floor(Math.random()*adjectives.length)];
+            const noun = nouns[Math.floor(Math.random()*nouns.length)];
             document.getElementById('itemDesc').value = `A ${adj.toLowerCase()} ${noun} that will leave you craving more.`;
         });
 
@@ -271,107 +249,123 @@
         init();
 
         async function main() {
-            const client=window.client;
-            const {data:{session}}=await client.auth.getSession();
+            const client = window.client;
+            const {data:{session}} = await client.auth.getSession();
             if(!session){window.location.href='auth.html';return;}
-            const user=session.user;
+            const user = session.user;
 
-            const {data:cafe,error:cafeErr}=await client.from('cafes').select('*').eq('owner_id',user.id).single();
-            if(cafeErr||!cafe){alert('Cafe not found. Re-signup.');await client.auth.signOut();window.location.href='auth.html';return;}
-
-            // ---------- Audio unlock – unmute button always visible ----------
-            const unmuteBtn = document.getElementById('unmuteBtn');
-
-            function initAudioContext() {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            // ---------- AUTO-REPAIR MISSING CAFE ROW ----------
+            let {data: cafe, error: cafeErr} = await client.from('cafes').select('*').eq('owner_id',user.id).single();
+            if(cafeErr || !cafe){
+                // Attempt to create a default cafe row
+                const {error: insertErr} = await client.from('cafes').insert({owner_id:user.id});
+                if(insertErr && insertErr.code!=='23505'){
+                    alert('Unable to create your cafe profile. Please re-signup.');
+                    await client.auth.signOut();
+                    window.location.href = 'auth.html';
+                    return;
                 }
-                if (audioCtx.state === 'suspended') {
+                // Fetch again
+                const retry = await client.from('cafes').select('*').eq('owner_id',user.id).single();
+                if(retry.error || !retry.data){
+                    alert('Cafe profile still not found. Please re-signup.');
+                    await client.auth.signOut();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+                cafe = retry.data;
+            }
+
+            // ---------- AUDIO UNLOCK ----------
+            const unmuteBtn = document.getElementById('unmuteBtn');
+            function initAudioContext() {
+                if(!audioCtx){
+                    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+                }
+                if(audioCtx.state==='suspended'){
                     audioCtx.resume();
                 }
-                // Hide the button once audio is running
-                if (audioCtx.state === 'running') {
+                if(audioCtx.state==='running'){
                     unmuteBtn.classList.add('hidden');
                 }
             }
-
-            unmuteBtn.addEventListener('click', () => {
-                initAudioContext();
-            });
+            unmuteBtn.addEventListener('click', initAudioContext);
+            // Also unlock on any click in the document
+            document.addEventListener('click', initAudioContext, {once:false});
 
             // Collapsible sections
             document.querySelectorAll('.collapsible-header').forEach(h=>{
                 h.addEventListener('click',()=>{
-                    const content=h.nextElementSibling;
+                    const content = h.nextElementSibling;
                     content.classList.toggle('open');
-                    h.querySelector('span').textContent=content.classList.contains('open')?'▼':'▶';
+                    h.querySelector('span').textContent = content.classList.contains('open')?'▼':'▶';
                 });
             });
 
             // Settings
-            document.getElementById('cafeName').value=cafe.cafe_name||'';
-            document.getElementById('whatsapp').value=cafe.whatsapp||'';
-            document.getElementById('description').value=cafe.description||'';
-            document.getElementById('primaryColor').value=cafe.primary_color||'#FF6B35';
-            document.getElementById('accentColor').value=cafe.accent_color||'#2F3E46';
-            document.getElementById('saveSettingsBtn').addEventListener('click',async()=>{
+            document.getElementById('cafeName').value = cafe.cafe_name||'';
+            document.getElementById('whatsapp').value = cafe.whatsapp||'';
+            document.getElementById('description').value = cafe.description||'';
+            document.getElementById('primaryColor').value = cafe.primary_color||'#FF6B35';
+            document.getElementById('accentColor').value = cafe.accent_color||'#2F3E46';
+            document.getElementById('saveSettingsBtn').addEventListener('click', async()=>{
                 await client.from('cafes').update({
-                    cafe_name:document.getElementById('cafeName').value,
-                    whatsapp:document.getElementById('whatsapp').value.replace(/\D/g,''),
-                    description:document.getElementById('description').value,
-                    primary_color:document.getElementById('primaryColor').value,
-                    accent_color:document.getElementById('accentColor').value
+                    cafe_name: document.getElementById('cafeName').value,
+                    whatsapp: document.getElementById('whatsapp').value.replace(/\D/g,''),
+                    description: document.getElementById('description').value,
+                    primary_color: document.getElementById('primaryColor').value,
+                    accent_color: document.getElementById('accentColor').value
                 }).eq('owner_id',user.id);
                 alert('Saved!');
             });
 
             // QR Code
-            document.getElementById('qrBtn').addEventListener('click', () => {
+            document.getElementById('qrBtn').addEventListener('click', ()=>{
                 const url = BASE_MENU_URL + cafe.id;
                 const qrContainer = document.getElementById('qrcode');
                 qrContainer.innerHTML = '';
                 const img = document.createElement('img');
                 img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000`;
-                img.width = 250; img.height = 250;
-                img.style.display = 'block'; img.style.margin = '0 auto'; img.style.borderRadius = '12px'; img.style.background = '#fff'; img.style.padding = '8px';
+                img.width=250; img.height=250;
+                img.style.display='block'; img.style.margin='0 auto'; img.style.borderRadius='12px'; img.style.background='#fff'; img.style.padding='8px';
                 qrContainer.appendChild(img);
                 document.getElementById('qrLinkDisplay').textContent = url;
-                navigator.clipboard.writeText(url).then(() => alert('Menu link copied!')).catch(() => {});
+                navigator.clipboard.writeText(url).then(()=>alert('Menu link copied!')).catch(()=>{});
             });
 
             // ---------- ORDERS (with Realtime) ----------
-            const loadAllOrders = async () => {
+            const loadAllOrders = async ()=>{
                 const {data}=await client.from('orders').select('*').eq('cafe_id',cafe.id).order('created_at',{ascending:false}).limit(80);
-                allOrders=data||[];
-                const cutoff=new Date(Date.now()-24*3600000);
-                const toDelete=allOrders.filter(o=>(o.status==='delivered'||o.status==='completed')&&new Date(o.created_at)<cutoff);
+                allOrders = data||[];
+                const cutoff = new Date(Date.now()-24*3600000);
+                const toDelete = allOrders.filter(o=>(o.status==='delivered'||o.status==='completed')&&new Date(o.created_at)<cutoff);
                 for(const o of toDelete) await client.from('orders').delete().eq('id',o.id);
                 if(toDelete.length) return loadAllOrders();
                 renderOrderTab();
-                document.getElementById('totalOrders').textContent=allOrders.length||0;
+                document.getElementById('totalOrders').textContent = allOrders.length||0;
                 updateAnalytics();
             };
-            const renderOrderTab = () => {
-                const filtered=allOrders.filter(o=>currentOrderTab==='new'?o.status==='new':currentOrderTab==='accepted'?o.status==='accepted':o.status==='delivered'||o.status==='completed');
-                const container=document.getElementById('orderListContainer');
+            const renderOrderTab = ()=>{
+                const filtered = allOrders.filter(o=>currentOrderTab==='new'?o.status==='new':currentOrderTab==='accepted'?o.status==='accepted':o.status==='delivered'||o.status==='completed');
+                const container = document.getElementById('orderListContainer');
                 if(!filtered.length){container.innerHTML='<p class="note">No orders</p>';return;}
-                container.innerHTML=filtered.map(order=>{
-                    const items=order.items||[];
-                    const itemList=items.map(i=>`${i.name}${i.variant?' ('+i.variant+')':''} ×${i.qty}`).join(', ');
-                    const time=new Date(order.created_at).toLocaleTimeString();
-                    let actions='';
-                    if(order.status==='new') actions=`<button class="btn-sm btn-accept" data-id="${order.id}">Accept</button>`;
-                    else if(order.status==='accepted') actions=`<button class="btn-sm btn-deliver" data-id="${order.id}">Deliver</button>`;
-                    else actions=`<button class="btn-sm btn-pdf" data-id="${order.id}">📄 PDF</button> <button class="btn-sm btn-print" data-id="${order.id}">🖨️ Print</button>`;
+                container.innerHTML = filtered.map(order=>{
+                    const items = order.items||[];
+                    const itemList = items.map(i=>`${i.name}${i.variant?' ('+i.variant+')':''} ×${i.qty}`).join(', ');
+                    const time = new Date(order.created_at).toLocaleTimeString();
+                    let actions = '';
+                    if(order.status==='new') actions = `<button class="btn-sm btn-accept" data-id="${order.id}">Accept</button>`;
+                    else if(order.status==='accepted') actions = `<button class="btn-sm btn-deliver" data-id="${order.id}">Deliver</button>`;
+                    else actions = `<button class="btn-sm btn-pdf" data-id="${order.id}">📄 PDF</button> <button class="btn-sm btn-print" data-id="${order.id}">🖨️ Print</button>`;
                     return `<div class="order-item"><div class="order-info"><strong>Table ${order.table_number}</strong> <small>${time}</small><div>👤 ${order.customer_name||'Guest'} | ${itemList}</div><div style="color:var(--primary);">₹${order.total}</div></div><div class="order-actions">${actions}</div></div>`;
                 }).join('');
                 attachOrderEvents();
             };
-            const attachOrderEvents = () => {
+            const attachOrderEvents = ()=>{
                 document.querySelectorAll('.btn-accept').forEach(b=>b.addEventListener('click',async function(){await client.from('orders').update({status:'accepted'}).eq('id',this.dataset.id);loadAllOrders();}));
                 document.querySelectorAll('.btn-deliver').forEach(b=>b.addEventListener('click',async function(){await client.from('orders').update({status:'delivered'}).eq('id',this.dataset.id);loadAllOrders();}));
                 document.querySelectorAll('.btn-pdf').forEach(b=>b.addEventListener('click',function(){
-                    const order=allOrders.find(o=>o.id===this.dataset.id);
+                    const order = allOrders.find(o=>o.id===this.dataset.id);
                     if(!order) return;
                     const {jsPDF}=window.jspdf; const doc=new jsPDF();
                     doc.text(`Order – Table ${order.table_number}`,15,20);
@@ -383,7 +377,7 @@
                     doc.save(`order_${order.table_number}_${Date.now()}.pdf`);
                 }));
                 document.querySelectorAll('.btn-print').forEach(b=>b.addEventListener('click',function(){
-                    const order=allOrders.find(o=>o.id===this.dataset.id);
+                    const order = allOrders.find(o=>o.id===this.dataset.id);
                     if(!order) return;
                     const {jsPDF}=window.jspdf; const doc=new jsPDF();
                     doc.text(`Order – Table ${order.table_number}`,15,20);
@@ -393,22 +387,22 @@
                     let y=54;
                     (order.items||[]).forEach((item,i)=>{doc.text(`${i+1}. ${item.name}${item.variant?' ('+item.variant+')':''} ×${item.qty} = Rs.${(item.price*item.qty).toFixed(2)}`,20,y);y+=8;});
                     doc.autoPrint();
-                    window.open(doc.output('bloburl'), '_blank');
+                    window.open(doc.output('bloburl'),'_blank');
                 }));
             };
             document.querySelectorAll('.order-tab').forEach(t=>t.addEventListener('click',function(){
                 document.querySelectorAll('.order-tab').forEach(x=>x.classList.remove('active'));
-                this.classList.add('active'); currentOrderTab=this.dataset.tab; renderOrderTab();
+                this.classList.add('active'); currentOrderTab = this.dataset.tab; renderOrderTab();
             }));
 
-            // Notifications
+            // Notifications + audio context
             const notifBtn = document.getElementById('requestNotificationPermissionBtn');
-            async function enableNotifications() {
-                initAudioContext();  // also unlock audio
+            async function enableNotifications(){
+                initAudioContext();
                 await Notification.requestPermission();
                 notifBtn.style.display = 'none';
             }
-            if (Notification.permission === 'default') {
+            if(Notification.permission==='default'){
                 notifBtn.style.display = 'inline-block';
                 notifBtn.addEventListener('click', enableNotifications);
             }
@@ -416,34 +410,34 @@
             // Supabase Realtime for instant order updates
             client
               .channel('orders-channel')
-              .on('postgres_changes', {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'orders',
-                filter: `cafe_id=eq.${cafe.id}`
-              }, (payload) => {
+              .on('postgres_changes',{
+                event:'INSERT',
+                schema:'public',
+                table:'orders',
+                filter:`cafe_id=eq.${cafe.id}`
+              },(payload)=>{
                 const newOrder = payload.new;
                 allOrders.unshift(newOrder);
                 renderOrderTab();
                 document.getElementById('totalOrders').textContent = allOrders.length;
-                if (Notification.permission === 'granted') {
-                    new Notification('New Order!', {
-                        body: `Table ${newOrder.table_number} – ₹${newOrder.total}`,
-                        icon: cafe.logo_url || ''
+                if(Notification.permission==='granted'){
+                    new Notification('New Order!',{
+                        body:`Table ${newOrder.table_number} – ₹${newOrder.total}`,
+                        icon: cafe.logo_url||''
                     });
                 }
-                if (audioCtx && audioCtx.state === 'running') {
-                    try {
+                if(audioCtx && audioCtx.state==='running'){
+                    try{
                         const oscillator = audioCtx.createOscillator();
                         const gainNode = audioCtx.createGain();
                         oscillator.connect(gainNode);
                         gainNode.connect(audioCtx.destination);
                         oscillator.frequency.value = 800;
                         oscillator.type = 'sine';
-                        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        gainNode.gain.setValueAtTime(0.3,audioCtx.currentTime);
                         oscillator.start(audioCtx.currentTime);
-                        oscillator.stop(audioCtx.currentTime + 0.15);
-                    } catch (e) {}
+                        oscillator.stop(audioCtx.currentTime+0.15);
+                    }catch(e){}
                 }
               })
               .subscribe();
@@ -451,154 +445,154 @@
             await loadAllOrders();
 
             // ---------- ANALYTICS CHART ----------
-            async function updateAnalytics() {
+            async function updateAnalytics(){
                 const ctx = document.getElementById('analyticsChart').getContext('2d');
                 const days = [];
                 const orderCounts = [];
-                for (let i = 6; i >= 0; i--) {
+                for(let i=6;i>=0;i--){
                     const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    days.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
-                    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
-                    const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
-                    const { count } = await client.from('orders').select('*', { count: 'exact', head: true })
-                        .eq('cafe_id', cafe.id)
-                        .gte('created_at', start)
-                        .lt('created_at', end);
-                    orderCounts.push(count || 0);
+                    d.setDate(d.getDate()-i);
+                    days.push(d.toLocaleDateString('en-US',{weekday:'short'}));
+                    const start = new Date(d.getFullYear(),d.getMonth(),d.getDate()).toISOString();
+                    const end = new Date(d.getFullYear(),d.getMonth(),d.getDate()+1).toISOString();
+                    const {count} = await client.from('orders').select('*',{count:'exact',head:true})
+                        .eq('cafe_id',cafe.id)
+                        .gte('created_at',start)
+                        .lt('created_at',end);
+                    orderCounts.push(count||0);
                 }
-                if (analyticsChart) analyticsChart.destroy();
-                analyticsChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
+                if(analyticsChart) analyticsChart.destroy();
+                analyticsChart = new Chart(ctx,{
+                    type:'line',
+                    data:{
                         labels: days,
-                        datasets: [{
-                            label: 'Orders',
+                        datasets:[{
+                            label:'Orders',
                             data: orderCounts,
-                            borderColor: '#FF6B35',
-                            backgroundColor: 'rgba(255,107,53,0.1)',
-                            fill: true,
-                            tension: 0.3
+                            borderColor:'#FF6B35',
+                            backgroundColor:'rgba(255,107,53,0.1)',
+                            fill:true,
+                            tension:0.3
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    options:{
+                        responsive:true,
+                        plugins:{legend:{display:false}},
+                        scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}
                     }
                 });
             }
 
             // ---------- ITEMS ----------
-            const loadItems = async () => {
-                const menuList=document.getElementById('menuList');
-                menuList.innerHTML='<p class="note">Loading...</p>';
+            const loadItems = async ()=>{
+                const menuList = document.getElementById('menuList');
+                menuList.innerHTML = '<p class="note">Loading...</p>';
                 try{
-                    const {data,error}=await client.from('menu_items').select('*').eq('cafe_id',cafe.id).order('created_at');
-                    if(error)throw error;
+                    const {data,error} = await client.from('menu_items').select('*').eq('cafe_id',cafe.id).order('created_at');
+                    if(error) throw error;
                     if(!data||data.length===0){menuList.innerHTML='<p class="note">No items yet.</p>';document.getElementById('totalItems').textContent='0';return;}
-                    menuList.innerHTML='';
+                    menuList.innerHTML = '';
                     data.forEach(item=>{
-                        const div=document.createElement('div');div.className='menu-item';
-                        const hasVariants=item.description&&item.description.startsWith('VAR::');
-                        let displayStr=`<strong>${item.name}</strong>`;
-                        if(item.discount) displayStr+=` <span style="background:#c0392b;color:white;font-size:0.7rem;padding:0.1rem 0.4rem;border-radius:8px;">${item.discount}</span>`;
-                        if(item.featured) displayStr+=' 🔥';
+                        const div = document.createElement('div'); div.className = 'menu-item';
+                        const hasVariants = item.description&&item.description.startsWith('VAR::');
+                        let displayStr = `<strong>${item.name}</strong>`;
+                        if(item.discount) displayStr += ` <span style="background:#c0392b;color:white;font-size:0.7rem;padding:0.1rem 0.4rem;border-radius:8px;">${item.discount}</span>`;
+                        if(item.featured) displayStr += ' 🔥';
                         if(hasVariants){
-                            const variants=item.description.replace('VAR::','').split('|').map(v=>{const[n,p]=v.split('=');return `${n} ₹${p}`;}).join(', ');
-                            displayStr+=` (${variants})`;
-                        }else displayStr+=` · ₹${item.price}`;
-                        displayStr+=` <small>(${item.category})</small>`;
-                        div.innerHTML=`<div>${displayStr}</div><div><button class="btn-sm toggle-avail-btn ${item.available?'available':''}" data-id="${item.id}" data-avail="${item.available}">${item.available?'On':'Off'}</button> <button class="btn-sm btn-outline edit-item-btn" data-id="${item.id}">Edit</button> <button class="btn-sm btn-deliver del-item-btn" data-id="${item.id}">Del</button></div>`;
+                            const variants = item.description.replace('VAR::','').split('|').map(v=>{const[n,p]=v.split('=');return `${n} ₹${p}`;}).join(', ');
+                            displayStr += ` (${variants})`;
+                        }else displayStr += ` · ₹${item.price}`;
+                        displayStr += ` <small>(${item.category})</small>`;
+                        div.innerHTML = `<div>${displayStr}</div><div><button class="btn-sm toggle-avail-btn ${item.available?'available':''}" data-id="${item.id}" data-avail="${item.available}">${item.available?'On':'Off'}</button> <button class="btn-sm btn-outline edit-item-btn" data-id="${item.id}">Edit</button> <button class="btn-sm btn-deliver del-item-btn" data-id="${item.id}">Del</button></div>`;
                         menuList.appendChild(div);
                     });
-                    document.getElementById('totalItems').textContent=data.length||0;
+                    document.getElementById('totalItems').textContent = data.length||0;
                     attachItemEvents(data);
-                }catch(err){menuList.innerHTML=`<p class="note">Error: ${err.message}</p>`;}
+                }catch(err){menuList.innerHTML = `<p class="note">Error: ${err.message}</p>`;}
             };
-            const attachItemEvents = (data) => {
+            const attachItemEvents = (data)=>{
                 document.querySelectorAll('.toggle-avail-btn').forEach(b=>b.addEventListener('click',async function(){await client.from('menu_items').update({available:this.dataset.avail!=='true'}).eq('id',this.dataset.id);loadItems();}));
                 document.querySelectorAll('.del-item-btn').forEach(b=>b.addEventListener('click',async function(){if(confirm('Delete?')){await client.from('menu_items').delete().eq('id',this.dataset.id);loadItems();}}));
                 document.querySelectorAll('.edit-item-btn').forEach(b=>b.addEventListener('click',async function(){
-                    const item=data.find(i=>i.id===this.dataset.id);
-                    if(!item)return;
-                    document.getElementById('editId').value=item.id;
-                    document.getElementById('itemName').value=item.name;
-                    document.getElementById('itemDesc').value=item.description&&!item.description.startsWith('VAR::')?item.description:'';
-                    document.getElementById('itemPrice').value=item.price;
-                    document.getElementById('itemCategory').value=item.category;
-                    document.getElementById('itemDiscount').value=item.discount||'';
-                    document.getElementById('itemFeatured').checked=item.featured;
-                    const vContainer=document.getElementById('variantsContainer');vContainer.innerHTML='';
+                    const item = data.find(i=>i.id===this.dataset.id);
+                    if(!item) return;
+                    document.getElementById('editId').value = item.id;
+                    document.getElementById('itemName').value = item.name;
+                    document.getElementById('itemDesc').value = item.description&&!item.description.startsWith('VAR::')?item.description:'';
+                    document.getElementById('itemPrice').value = item.price;
+                    document.getElementById('itemCategory').value = item.category;
+                    document.getElementById('itemDiscount').value = item.discount||'';
+                    document.getElementById('itemFeatured').checked = item.featured;
+                    const vContainer = document.getElementById('variantsContainer'); vContainer.innerHTML = '';
                     if(item.description&&item.description.startsWith('VAR::')){
                         item.description.replace('VAR::','').split('|').forEach(p=>{
                             const[n,pr]=p.split('=');
-                            const row=document.createElement('div');row.style.display='flex';row.style.gap='0.3rem';
-                            row.innerHTML=`<input type="text" class="vname" value="${n}" /><input type="number" class="vprice" step="0.01" value="${pr}" /><button type="button" class="btn-outline remove-variant-btn">✕</button>`;
+                            const row = document.createElement('div'); row.style.display='flex'; row.style.gap='0.3rem';
+                            row.innerHTML = `<input type="text" class="vname" value="${n}" /><input type="number" class="vprice" step="0.01" value="${pr}" /><button type="button" class="btn-outline remove-variant-btn">✕</button>`;
                             vContainer.appendChild(row); row.querySelector('.remove-variant-btn').addEventListener('click',()=>row.remove());
                         });
                     }else{
-                        const row=document.createElement('div');row.style.display='flex';row.style.gap='0.3rem';
-                        row.innerHTML=`<input type="text" class="vname" placeholder="Name" /><input type="number" class="vprice" step="0.01" placeholder="Price" />`;
+                        const row = document.createElement('div'); row.style.display='flex'; row.style.gap='0.3rem';
+                        row.innerHTML = `<input type="text" class="vname" placeholder="Name" /><input type="number" class="vprice" step="0.01" placeholder="Price" />`;
                         vContainer.appendChild(row);
                     }
-                    document.getElementById('saveItemBtn').textContent='Update Item';
+                    document.getElementById('saveItemBtn').textContent = 'Update Item';
                     document.getElementById('itemSection').classList.add('open');
-                    document.getElementById('itemSection').previousElementSibling.querySelector('span').textContent='▼';
+                    document.getElementById('itemSection').previousElementSibling.querySelector('span').textContent = '▼';
                 }));
             };
             await loadItems();
 
             // Save item (with discount)
             document.getElementById('addVariantBtn').addEventListener('click',()=>{
-                const row=document.createElement('div');row.style.display='flex';row.style.gap='0.3rem';
-                row.innerHTML=`<input type="text" class="vname" placeholder="Name" /><input type="number" class="vprice" step="0.01" placeholder="Price" /><button type="button" class="btn-outline remove-variant-btn">✕</button>`;
+                const row = document.createElement('div'); row.style.display='flex'; row.style.gap='0.3rem';
+                row.innerHTML = `<input type="text" class="vname" placeholder="Name" /><input type="number" class="vprice" step="0.01" placeholder="Price" /><button type="button" class="btn-outline remove-variant-btn">✕</button>`;
                 document.getElementById('variantsContainer').appendChild(row); row.querySelector('.remove-variant-btn').addEventListener('click',()=>row.remove());
             });
             document.getElementById('menuForm').addEventListener('submit',async(e)=>{
                 e.preventDefault();
-                const id=document.getElementById('editId').value;
-                const name=document.getElementById('itemName').value;
-                const desc=document.getElementById('itemDesc').value.trim();
-                let price=parseFloat(document.getElementById('itemPrice').value);
-                const category=document.getElementById('itemCategory').value;
-                const discount=document.getElementById('itemDiscount').value.trim();
-                const featured=document.getElementById('itemFeatured').checked;
-                const vNames=Array.from(document.querySelectorAll('.vname')).map(i=>i.value.trim());
-                const vPrices=Array.from(document.querySelectorAll('.vprice')).map(i=>i.value.trim());
-                let varStr='';
-                for(let i=0;i<vNames.length;i++) if(vNames[i]&&vPrices[i]&&!isNaN(parseFloat(vPrices[i]))) varStr+=(varStr?'|':'')+`${vNames[i]}=${vPrices[i]}`;
-                const hasVariants=varStr.length>0;
-                const description=hasVariants?'VAR::'+varStr:desc;
-                if(hasVariants) price=0; else if(isNaN(price)||price<=0) return alert('Enter price or variants');
-                const payload={cafe_id:cafe.id,name,description,price,category,discount,featured};
-                const {error}=id?await client.from('menu_items').update(payload).eq('id',id):await client.from('menu_items').insert(payload);
+                const id = document.getElementById('editId').value;
+                const name = document.getElementById('itemName').value;
+                const desc = document.getElementById('itemDesc').value.trim();
+                let price = parseFloat(document.getElementById('itemPrice').value);
+                const category = document.getElementById('itemCategory').value;
+                const discount = document.getElementById('itemDiscount').value.trim();
+                const featured = document.getElementById('itemFeatured').checked;
+                const vNames = Array.from(document.querySelectorAll('.vname')).map(i=>i.value.trim());
+                const vPrices = Array.from(document.querySelectorAll('.vprice')).map(i=>i.value.trim());
+                let varStr = '';
+                for(let i=0;i<vNames.length;i++) if(vNames[i]&&vPrices[i]&&!isNaN(parseFloat(vPrices[i]))) varStr += (varStr?'|':'') + `${vNames[i]}=${vPrices[i]}`;
+                const hasVariants = varStr.length>0;
+                const description = hasVariants?'VAR::'+varStr:desc;
+                if(hasVariants) price = 0; else if(isNaN(price)||price<=0) return alert('Enter price or variants');
+                const payload = {cafe_id:cafe.id,name,description,price,category,discount,featured};
+                const {error} = id?await client.from('menu_items').update(payload).eq('id',id):await client.from('menu_items').insert(payload);
                 if(error) alert(error.message);
                 else{
-                    document.getElementById('editId').value=''; document.getElementById('menuForm').reset();
-                    document.getElementById('variantsContainer').innerHTML='<div style="display:flex; gap:0.3rem;"><input type="text" class="vname" placeholder="Name" /><input type="number" class="vprice" step="0.01" placeholder="Price" /></div>';
-                    document.getElementById('saveItemBtn').textContent='Add Item'; loadItems(); loadCategories();
+                    document.getElementById('editId').value = ''; document.getElementById('menuForm').reset();
+                    document.getElementById('variantsContainer').innerHTML = '<div style="display:flex;gap:0.3rem;"><input type="text" class="vname" placeholder="Name" /><input type="number" class="vprice" step="0.01" placeholder="Price" /></div>';
+                    document.getElementById('saveItemBtn').textContent = 'Add Item'; loadItems(); loadCategories();
                 }
             });
 
             // Bulk add
             document.getElementById('bulkAddBtn').addEventListener('click',async()=>{
-                const raw=document.getElementById('bulkTextarea').value.trim(); if(!raw)return;
-                const items=raw.split('\n').filter(l=>l.trim()).map(line=>{
-                    const[name,price,cat]=line.split(',').map(s=>s.trim());
-                    return(name&&!isNaN(parseFloat(price)))?{cafe_id:cafe.id,name,price:parseFloat(price),category:cat||'Uncategorized',description:'',available:true}:null;
+                const raw = document.getElementById('bulkTextarea').value.trim(); if(!raw) return;
+                const items = raw.split('\n').filter(l=>l.trim()).map(line=>{
+                    const[name,price,cat] = line.split(',').map(s=>s.trim());
+                    return (name&&!isNaN(parseFloat(price)))?{cafe_id:cafe.id,name,price:parseFloat(price),category:cat||'Uncategorized',description:'',available:true}:null;
                 }).filter(Boolean);
-                if(!items.length)return document.getElementById('bulkMessage').textContent='No valid items';
+                if(!items.length) return document.getElementById('bulkMessage').textContent='No valid items';
                 const{error}=await client.from('menu_items').insert(items);
-                document.getElementById('bulkMessage').textContent=error?error.message:`Added ${items.length} items!`;
+                document.getElementById('bulkMessage').textContent = error?error.message:`Added ${items.length} items!`;
                 if(!error){document.getElementById('bulkTextarea').value='';loadItems();loadCategories();}
             });
 
             // Category datalist
-            const loadCategories = async () => {
+            const loadCategories = async ()=>{
                 const{data}=await client.from('menu_items').select('category').eq('cafe_id',cafe.id);
-                const cats=[...new Set((data||[]).map(i=>i.category))].filter(Boolean);
-                document.getElementById('categoryList').innerHTML=cats.map(c=>`<option value="${c}">`).join('');
+                const cats = [...new Set((data||[]).map(i=>i.category))].filter(Boolean);
+                document.getElementById('categoryList').innerHTML = cats.map(c=>`<option value="${c}">`).join('');
             };
             await loadCategories();
 
@@ -616,8 +610,8 @@
             const addAllBtn = document.getElementById('addAllBtn');
             let extractedItems = [];
 
-            function handleImageSelection(file) {
-                if (!file) return;
+            function handleImageSelection(file){
+                if(!file) return;
                 const reader = new FileReader();
                 reader.onload = ev => {
                     imagePreview.src = ev.target.result;
@@ -629,35 +623,34 @@
                 };
                 reader.readAsDataURL(file);
             }
+            cameraInput.addEventListener('change', e => { if(e.target.files[0]) handleImageSelection(e.target.files[0]); });
+            galleryInput.addEventListener('change', e => { if(e.target.files[0]) handleImageSelection(e.target.files[0]); });
 
-            cameraInput.addEventListener('change', e => { if (e.target.files[0]) handleImageSelection(e.target.files[0]); });
-            galleryInput.addEventListener('change', e => { if (e.target.files[0]) handleImageSelection(e.target.files[0]); });
-
-            scanBtn.addEventListener('click', async () => {
-                if (!imagePreview.src) return;
+            scanBtn.addEventListener('click', async ()=>{
+                if(!imagePreview.src) return;
                 scanBtn.disabled = true; ocrProgress.style.display = 'block'; ocrBar.value = 0; ocrStatus.textContent = 'Reading...';
-                try {
-                    const { data: { text } } = await Tesseract.recognize(imagePreview.src, 'eng', {
-                        logger: m => { if (m.status === 'recognizing text') { ocrBar.value = Math.round(m.progress * 100); ocrStatus.textContent = `Reading... ${Math.round(m.progress * 100)}%`; } }
+                try{
+                    const{data:{text}} = await Tesseract.recognize(imagePreview.src,'eng',{
+                        logger: m => { if(m.status==='recognizing text'){ ocrBar.value = Math.round(m.progress*100); ocrStatus.textContent = `Reading... ${Math.round(m.progress*100)}%`; } }
                     });
-                    extractedItems = text.split('\n').filter(l => l.trim()).map(line => { const m = line.match(/(.+?)\s*[₹]?(\d+\.?\d*)\s*$/); return m ? { name: m[1].trim(), price: m[2] } : null; }).filter(Boolean);
-                    scanResult.innerHTML = extractedItems.map((item, idx) => `<div style="display:flex; gap:0.3rem; margin-bottom:0.3rem;"><input type="text" value="${item.name}" style="flex:2" /><input type="number" value="${item.price}" step="0.01" style="flex:1" /><button class="btn-outline remove-extracted-btn" data-index="${idx}">✕</button></div>`).join('');
-                    document.querySelectorAll('.remove-extracted-btn').forEach(b => b.addEventListener('click', function() { extractedItems.splice(+this.dataset.index, 1); scanBtn.click(); }));
+                    extractedItems = text.split('\n').filter(l=>l.trim()).map(line=>{ const m = line.match(/(.+?)\s*[₹]?(\d+\.?\d*)\s*$/); return m?{name:m[1].trim(),price:m[2]}:null; }).filter(Boolean);
+                    scanResult.innerHTML = extractedItems.map((item,idx)=>`<div style="display:flex;gap:0.3rem;margin-bottom:0.3rem;"><input type="text" value="${item.name}" style="flex:2" /><input type="number" value="${item.price}" step="0.01" style="flex:1" /><button class="btn-outline remove-extracted-btn" data-index="${idx}">✕</button></div>`).join('');
+                    document.querySelectorAll('.remove-extracted-btn').forEach(b=>b.addEventListener('click',function(){ extractedItems.splice(+this.dataset.index,1); scanBtn.click(); }));
                     categoryAssign.style.display = 'block';
-                } catch (err) { alert('OCR failed: ' + err.message); }
-                finally { ocrProgress.style.display = 'none'; scanBtn.disabled = false; }
+                }catch(err){ alert('OCR failed: '+err.message); }
+                finally{ ocrProgress.style.display = 'none'; scanBtn.disabled = false; }
             });
 
-            addAllBtn.addEventListener('click', async () => {
-                const cat = globalCategory.value.trim() || 'Uncategorized';
-                const toInsert = extractedItems.filter(i => i.name && !isNaN(parseFloat(i.price))).map(i => ({ cafe_id: cafe.id, name: i.name, price: parseFloat(i.price), category: cat, description: '', available: true }));
-                if (!toInsert.length) return alert('No valid items');
-                const { error } = await client.from('menu_items').insert(toInsert);
-                if (error) alert(error.message);
-                else { alert(`Added ${toInsert.length} items!`); extractedItems = []; scanResult.innerHTML = ''; categoryAssign.style.display = 'none'; imagePreview.style.display = 'none'; scanBtn.style.display = 'none'; cameraInput.value = ''; galleryInput.value = ''; loadItems(); loadCategories(); }
+            addAllBtn.addEventListener('click', async ()=>{
+                const cat = globalCategory.value.trim()||'Uncategorized';
+                const toInsert = extractedItems.filter(i=>i.name&&!isNaN(parseFloat(i.price))).map(i=>({cafe_id:cafe.id,name:i.name,price:parseFloat(i.price),category:cat,description:'',available:true}));
+                if(!toInsert.length) return alert('No valid items');
+                const{error} = await client.from('menu_items').insert(toInsert);
+                if(error) alert(error.message);
+                else{ alert(`Added ${toInsert.length} items!`); extractedItems=[]; scanResult.innerHTML=''; categoryAssign.style.display='none'; imagePreview.style.display='none'; scanBtn.style.display='none'; cameraInput.value=''; galleryInput.value=''; loadItems(); loadCategories(); }
             });
 
-            document.getElementById('logoutBtn').addEventListener('click', async () => { await client.auth.signOut(); window.location.href = 'index.html'; });
+            document.getElementById('logoutBtn').addEventListener('click', async ()=>{ await client.auth.signOut(); window.location.href='index.html'; });
         }
     </script>
 </body>
