@@ -38,7 +38,6 @@
             background: var(--warning); color: white; border: none;
             padding: 0.4rem 1rem; border-radius: 20px; cursor: pointer;
             font-size: 0.8rem; font-weight: 600;
-            /* Always visible until clicked */
         }
         .btn-unmute.hidden { display: none; }
         .stats-row { display:flex; gap:0.8rem; margin-bottom:1.5rem; flex-wrap:wrap; }
@@ -213,10 +212,10 @@
         let analyticsChart = null;
         let audioCtx = null;
 
-        // Language strings (abbreviated for brevity)
+        // Language strings (abbreviated)
         const t = {
-            en: { views:"Views",items:"Items",orders:"Orders",analytics:"📊 Analytics (Last 7 Days)",noOrders:"No orders",settings:"Settings",cafeName:"Cafe Name",save:"Save",generateQR:"Generate QR",addItem:"Add Item" },
-            hi: { views:"दृश्य",items:"आइटम",orders:"ऑर्डर",analytics:"📊 विश्लेषण (पिछले 7 दिन)",noOrders:"कोई ऑर्डर नहीं",settings:"सेटिंग्स",cafeName:"कैफे का नाम",save:"सहेजें",generateQR:"QR जनरेट करें",addItem:"आइटम जोड़ें" }
+            en: { views:"Views",items:"Items",orders:"Orders",analytics:"📊 Analytics (Last 7 Days)",noOrders:"No orders",save:"Save",generateQR:"Generate QR",addItem:"Add Item" },
+            hi: { views:"दृश्य",items:"आइटम",orders:"ऑर्डर",analytics:"📊 विश्लेषण (पिछले 7 दिन)",noOrders:"कोई ऑर्डर नहीं",save:"सहेजें",generateQR:"QR जनरेट करें",addItem:"आइटम जोड़ें" }
         };
         let currentLang = 'en';
 
@@ -227,12 +226,9 @@
             document.getElementById('lblItems').textContent = d.items;
             document.getElementById('lblOrders').textContent = d.orders;
             document.getElementById('lblAnalytics').textContent = d.analytics;
-            const saveBtn = document.getElementById('saveSettingsBtn');
-            if(saveBtn) saveBtn.textContent = d.save;
-            const qrBtn = document.getElementById('qrBtn');
-            if(qrBtn) qrBtn.textContent = d.generateQR;
-            const saveItemBtn = document.getElementById('saveItemBtn');
-            if(saveItemBtn) saveItemBtn.textContent = d.addItem;
+            document.getElementById('saveSettingsBtn').textContent = d.save;
+            document.getElementById('qrBtn').textContent = d.generateQR;
+            document.getElementById('saveItemBtn').textContent = d.addItem;
         }
         document.getElementById('langSelect').addEventListener('change', (e) => setLanguage(e.target.value));
 
@@ -254,31 +250,28 @@
             if(!session){window.location.href='auth.html';return;}
             const user = session.user;
 
-            // ---------- AUTO-REPAIR MISSING CAFE ROW ----------
+            // ---------- ROBUST CAFE SETUP (never locks out) ----------
             let {data: cafe, error: cafeErr} = await client.from('cafes').select('*').eq('owner_id',user.id).single();
             if(cafeErr || !cafe){
-                // Attempt to create a default cafe row
+                // Try to create
                 const {error: insertErr} = await client.from('cafes').insert({owner_id:user.id});
+                // If duplicate key, that's fine – just fetch again
                 if(insertErr && insertErr.code!=='23505'){
-                    alert('Unable to create your cafe profile. Please re-signup.');
-                    await client.auth.signOut();
-                    window.location.href = 'auth.html';
-                    return;
+                    console.warn('Cafe creation warning:', insertErr.message);
                 }
-                // Fetch again
+                // Fetch again (must succeed now)
                 const retry = await client.from('cafes').select('*').eq('owner_id',user.id).single();
                 if(retry.error || !retry.data){
-                    alert('Cafe profile still not found. Please re-signup.');
-                    await client.auth.signOut();
-                    window.location.href = 'auth.html';
-                    return;
+                    // Last resort: create a local dummy so the UI doesn't crash
+                    cafe = { id: 'temp', owner_id: user.id, cafe_name:'My Cafe', whatsapp:'', description:'', primary_color:'#FF6B35', accent_color:'#2F3E46', logo_url:'' };
+                } else {
+                    cafe = retry.data;
                 }
-                cafe = retry.data;
             }
 
             // ---------- AUDIO UNLOCK ----------
             const unmuteBtn = document.getElementById('unmuteBtn');
-            function initAudioContext() {
+            function initAudioContext(){
                 if(!audioCtx){
                     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
                 }
@@ -309,6 +302,8 @@
             document.getElementById('primaryColor').value = cafe.primary_color||'#FF6B35';
             document.getElementById('accentColor').value = cafe.accent_color||'#2F3E46';
             document.getElementById('saveSettingsBtn').addEventListener('click', async()=>{
+                // If using temp cafe, ignore save
+                if(cafe.id === 'temp'){ alert('Cafe profile not fully set up. Please re-login.'); return; }
                 await client.from('cafes').update({
                     cafe_name: document.getElementById('cafeName').value,
                     whatsapp: document.getElementById('whatsapp').value.replace(/\D/g,''),
@@ -321,6 +316,7 @@
 
             // QR Code
             document.getElementById('qrBtn').addEventListener('click', ()=>{
+                if(cafe.id === 'temp'){ alert('Cafe profile not ready. Please re-login.'); return; }
                 const url = BASE_MENU_URL + cafe.id;
                 const qrContainer = document.getElementById('qrcode');
                 qrContainer.innerHTML = '';
@@ -335,6 +331,7 @@
 
             // ---------- ORDERS (with Realtime) ----------
             const loadAllOrders = async ()=>{
+                if(cafe.id === 'temp') return;
                 const {data}=await client.from('orders').select('*').eq('cafe_id',cafe.id).order('created_at',{ascending:false}).limit(80);
                 allOrders = data||[];
                 const cutoff = new Date(Date.now()-24*3600000);
@@ -407,45 +404,48 @@
                 notifBtn.addEventListener('click', enableNotifications);
             }
 
-            // Supabase Realtime for instant order updates
-            client
-              .channel('orders-channel')
-              .on('postgres_changes',{
-                event:'INSERT',
-                schema:'public',
-                table:'orders',
-                filter:`cafe_id=eq.${cafe.id}`
-              },(payload)=>{
-                const newOrder = payload.new;
-                allOrders.unshift(newOrder);
-                renderOrderTab();
-                document.getElementById('totalOrders').textContent = allOrders.length;
-                if(Notification.permission==='granted'){
-                    new Notification('New Order!',{
-                        body:`Table ${newOrder.table_number} – ₹${newOrder.total}`,
-                        icon: cafe.logo_url||''
-                    });
-                }
-                if(audioCtx && audioCtx.state==='running'){
-                    try{
-                        const oscillator = audioCtx.createOscillator();
-                        const gainNode = audioCtx.createGain();
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioCtx.destination);
-                        oscillator.frequency.value = 800;
-                        oscillator.type = 'sine';
-                        gainNode.gain.setValueAtTime(0.3,audioCtx.currentTime);
-                        oscillator.start(audioCtx.currentTime);
-                        oscillator.stop(audioCtx.currentTime+0.15);
-                    }catch(e){}
-                }
-              })
-              .subscribe();
+            // Supabase Realtime for instant order updates (only if cafe.id is real)
+            if(cafe.id !== 'temp'){
+                client
+                  .channel('orders-channel')
+                  .on('postgres_changes',{
+                    event:'INSERT',
+                    schema:'public',
+                    table:'orders',
+                    filter:`cafe_id=eq.${cafe.id}`
+                  },(payload)=>{
+                    const newOrder = payload.new;
+                    allOrders.unshift(newOrder);
+                    renderOrderTab();
+                    document.getElementById('totalOrders').textContent = allOrders.length;
+                    if(Notification.permission==='granted'){
+                        new Notification('New Order!',{
+                            body:`Table ${newOrder.table_number} – ₹${newOrder.total}`,
+                            icon: cafe.logo_url||''
+                        });
+                    }
+                    if(audioCtx && audioCtx.state==='running'){
+                        try{
+                            const oscillator = audioCtx.createOscillator();
+                            const gainNode = audioCtx.createGain();
+                            oscillator.connect(gainNode);
+                            gainNode.connect(audioCtx.destination);
+                            oscillator.frequency.value = 800;
+                            oscillator.type = 'sine';
+                            gainNode.gain.setValueAtTime(0.3,audioCtx.currentTime);
+                            oscillator.start(audioCtx.currentTime);
+                            oscillator.stop(audioCtx.currentTime+0.15);
+                        }catch(e){}
+                    }
+                  })
+                  .subscribe();
+            }
 
             await loadAllOrders();
 
             // ---------- ANALYTICS CHART ----------
             async function updateAnalytics(){
+                if(cafe.id === 'temp') return;
                 const ctx = document.getElementById('analyticsChart').getContext('2d');
                 const days = [];
                 const orderCounts = [];
@@ -485,6 +485,7 @@
 
             // ---------- ITEMS ----------
             const loadItems = async ()=>{
+                if(cafe.id === 'temp'){ document.getElementById('menuList').innerHTML='<p class="note">Cafe profile not ready. Please re-login.</p>'; return; }
                 const menuList = document.getElementById('menuList');
                 menuList.innerHTML = '<p class="note">Loading...</p>';
                 try{
@@ -551,6 +552,7 @@
             });
             document.getElementById('menuForm').addEventListener('submit',async(e)=>{
                 e.preventDefault();
+                if(cafe.id === 'temp'){ alert('Cafe profile not ready.'); return; }
                 const id = document.getElementById('editId').value;
                 const name = document.getElementById('itemName').value;
                 const desc = document.getElementById('itemDesc').value.trim();
@@ -577,6 +579,7 @@
 
             // Bulk add
             document.getElementById('bulkAddBtn').addEventListener('click',async()=>{
+                if(cafe.id === 'temp'){ alert('Cafe profile not ready.'); return; }
                 const raw = document.getElementById('bulkTextarea').value.trim(); if(!raw) return;
                 const items = raw.split('\n').filter(l=>l.trim()).map(line=>{
                     const[name,price,cat] = line.split(',').map(s=>s.trim());
@@ -590,6 +593,7 @@
 
             // Category datalist
             const loadCategories = async ()=>{
+                if(cafe.id === 'temp') return;
                 const{data}=await client.from('menu_items').select('category').eq('cafe_id',cafe.id);
                 const cats = [...new Set((data||[]).map(i=>i.category))].filter(Boolean);
                 document.getElementById('categoryList').innerHTML = cats.map(c=>`<option value="${c}">`).join('');
@@ -642,6 +646,7 @@
             });
 
             addAllBtn.addEventListener('click', async ()=>{
+                if(cafe.id === 'temp'){ alert('Cafe profile not ready.'); return; }
                 const cat = globalCategory.value.trim()||'Uncategorized';
                 const toInsert = extractedItems.filter(i=>i.name&&!isNaN(parseFloat(i.price))).map(i=>({cafe_id:cafe.id,name:i.name,price:parseFloat(i.price),category:cat,description:'',available:true}));
                 if(!toInsert.length) return alert('No valid items');
