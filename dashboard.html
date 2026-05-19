@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content="Cafe Boss Dashboard – Manage your digital QR menu, orders, and settings. Free forever."/>
     <title>Cafe Boss – Dashboard</title>
+    <link rel="manifest" href="manifest.json" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
             --primary: #FF6B35;
@@ -29,11 +31,10 @@
         @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
         .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.8rem; background:var(--card-bg); padding:1rem 1.5rem; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.3); }
         .header h1 { color:var(--primary); font-size:1.4rem; }
-        .btn-logout { background:none; border:1px solid var(--primary); color:var(--primary); padding:0.4rem 1rem; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:background 0.2s; }
-        .btn-logout:hover { background:var(--primary); color:white; }
+        .header-right { display:flex; align-items:center; gap:1rem; }
+        .btn-logout { background:none; border:1px solid var(--primary); color:var(--primary); padding:0.4rem 1rem; border-radius:20px; cursor:pointer; font-size:0.85rem; }
         .stats-row { display:flex; gap:0.8rem; margin-bottom:1.5rem; flex-wrap:wrap; }
-        .stat-card { flex:1; min-width:90px; background:var(--card-bg); padding:0.9rem; border-radius:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); transition:transform 0.2s; }
-        .stat-card:hover { transform:translateY(-3px); }
+        .stat-card { flex:1; min-width:90px; background:var(--card-bg); padding:0.9rem; border-radius:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); }
         .stat-card .stat-value { font-size:1.5rem; font-weight:700; color:var(--primary); }
         .stat-card .stat-label { font-size:0.7rem; opacity:0.7; margin-top:0.2rem; }
         .card { background:var(--card-bg); padding:1.3rem; border-radius:14px; margin-bottom:1.3rem; box-shadow:0 3px 10px rgba(0,0,0,0.3); animation: slideUp 0.4s ease; }
@@ -53,7 +54,7 @@
         .btn-sm:active { transform:scale(0.95); }
         .btn-accept { background:var(--success); color:white; }
         .btn-deliver { background:#2980b9; color:white; }
-        .btn-pdf { background:transparent; border:1px solid var(--primary); color:var(--primary); }
+        .btn-pdf, .btn-print { background:transparent; border:1px solid var(--primary); color:var(--primary); }
         .toggle-avail-btn { background:#555; color:white; }
         .toggle-avail-btn.available { background:var(--success); }
         .form-group { margin-bottom:0.8rem; }
@@ -70,27 +71,39 @@
         @keyframes slideDown { from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);} }
         .menu-item { display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #444; align-items:center; animation: fadeIn 0.3s; }
         footer { text-align:center; margin-top:2rem; opacity:0.5; font-size:0.7rem; }
-
-        /* File input wrapper for camera/gallery */
-        .file-btn-wrapper {
-            position: relative; overflow: hidden; cursor: pointer; display: inline-block;
-        }
-        .file-btn-wrapper input[type="file"] {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
-        }
+        .file-btn-wrapper { position: relative; overflow: hidden; cursor: pointer; display: inline-block; }
+        .file-btn-wrapper input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        #analyticsChart { max-height:200px; }
+        .lang-select { background:#1e1e1e; color:var(--cream); border:1px solid var(--border); border-radius:8px; padding:0.3rem 0.6rem; font-size:0.8rem; }
     </style>
 </head>
 <body>
-    <div class="header"><h1>☕ Cafe Boss</h1><button class="btn-logout" id="logoutBtn">Logout</button></div>
+    <div class="header">
+        <h1>☕ Cafe Boss</h1>
+        <div class="header-right">
+            <select id="langSelect" class="lang-select">
+                <option value="en">English</option>
+                <option value="hi">हिन्दी</option>
+            </select>
+            <button class="btn-logout" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+
     <div class="stats-row">
-        <div class="stat-card"><div class="stat-value" id="totalViews">0</div><div class="stat-label">Views</div></div>
-        <div class="stat-card"><div class="stat-value" id="totalItems">0</div><div class="stat-label">Items</div></div>
-        <div class="stat-card"><div class="stat-value" id="totalOrders">0</div><div class="stat-label">Orders</div></div>
+        <div class="stat-card"><div class="stat-value" id="totalViews">0</div><div class="stat-label" id="lblViews">Views</div></div>
+        <div class="stat-card"><div class="stat-value" id="totalItems">0</div><div class="stat-label" id="lblItems">Items</div></div>
+        <div class="stat-card"><div class="stat-value" id="totalOrders">0</div><div class="stat-label" id="lblOrders">Orders</div></div>
+    </div>
+
+    <!-- Analytics Chart -->
+    <div class="card">
+        <h3 id="lblAnalytics">📊 Analytics (Last 7 Days)</h3>
+        <canvas id="analyticsChart" width="400" height="150"></canvas>
     </div>
 
     <!-- Orders -->
     <div class="card">
-        <h3>📦 Orders <span class="badge" id="orderBadge" style="display:none;">0</span></h3>
+        <h3>📦 Orders <span id="orderBadge" style="background:var(--primary);color:white;border-radius:12px;padding:0.15rem 0.5rem;font-size:0.7rem;display:none;">0</span></h3>
         <div class="order-tabs">
             <button class="order-tab active" data-tab="new">🆕 New</button>
             <button class="order-tab" data-tab="accepted">✅ Accepted</button>
@@ -107,36 +120,23 @@
             <div class="form-group"><label>Cafe Name</label><input type="text" id="cafeName" /></div>
             <div class="form-group"><label>WhatsApp</label><input type="text" id="whatsapp" /></div>
             <div class="form-group"><label>Description</label><textarea id="description" rows="2"></textarea></div>
-            <div class="form-group"><label>Primary Color</label><input type="color" id="primaryColor" /></div>
-            <div class="form-group"><label>Accent Color</label><input type="color" id="accentColor" /></div>
+            <div class="form-group"><label>Primary</label><input type="color" id="primaryColor" /></div>
+            <div class="form-group"><label>Accent</label><input type="color" id="accentColor" /></div>
             <button id="saveSettingsBtn">Save</button>
         </div>
     </div>
 
-    <!-- QR Code Generator (FIXED – high‑contrast image) -->
-    <div class="card">
-        <h3>📱 QR Menu</h3>
-        <button id="qrBtn">Generate QR</button>
-        <div style="margin-top:1rem; text-align:center;">
-            <div id="qrcode"></div>
-            <div id="qrLinkDisplay" style="font-size:0.75rem; word-break:break-all; opacity:0.7; margin-top:0.4rem;"></div>
-        </div>
-    </div>
+    <!-- QR -->
+    <div class="card"><h3>📱 QR Menu</h3><button id="qrBtn">Generate QR</button><div style="margin-top:1rem;text-align:center;"><div id="qrcode"></div><div id="qrLinkDisplay" style="font-size:0.75rem;word-break:break-all;opacity:0.7;margin-top:0.4rem;"></div></div></div>
 
-    <!-- Smart Menu Builder (OCR) -->
+    <!-- Smart Menu Builder -->
     <div class="card">
         <div class="collapsible-header"><h3>📸 Smart Menu Builder</h3><span>▶</span></div>
         <div class="collapsed-content" id="smartSection">
             <p class="note">Snap a photo – only lines with prices are kept.</p>
             <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                <label class="btn-outline file-btn-wrapper">
-                    📷 Camera
-                    <input type="file" id="cameraInput" accept="image/*" capture="environment" />
-                </label>
-                <label class="btn-outline file-btn-wrapper">
-                    🖼️ Gallery
-                    <input type="file" id="galleryInput" accept="image/*" />
-                </label>
+                <label class="btn-outline file-btn-wrapper">📷 Camera<input type="file" id="cameraInput" accept="image/*" capture="environment" /></label>
+                <label class="btn-outline file-btn-wrapper">🖼️ Gallery<input type="file" id="galleryInput" accept="image/*" /></label>
             </div>
             <img id="imagePreview" alt="Preview" style="max-width:100%; max-height:250px; border-radius:10px; margin:0.8rem 0; display:none;" />
             <button id="scanBtn" style="display:none;">🔍 Scan & Extract</button>
@@ -156,16 +156,22 @@
         </div>
     </div>
 
-    <!-- Add Item -->
+    <!-- Add Item (discount + AI) -->
     <div class="card">
         <div class="collapsible-header"><h3>✏️ Add Item</h3><span>▶</span></div>
         <div class="collapsed-content" id="itemSection">
             <form id="menuForm">
                 <input type="hidden" id="editId" />
                 <div class="form-group"><label>Name</label><input type="text" id="itemName" required /></div>
-                <div class="form-group"><label>Description</label><input type="text" id="itemDesc" /></div>
+                <div class="form-group"><label>Description</label>
+                    <div style="display:flex; gap:0.5rem;">
+                        <input type="text" id="itemDesc" style="flex:1;" />
+                        <button type="button" id="aiDescBtn" class="btn-outline" style="padding:0.4rem 0.8rem; font-size:0.75rem;">✨ AI</button>
+                    </div>
+                </div>
                 <div class="form-group"><label>Price (₹)</label><input type="number" id="itemPrice" step="0.01" /></div>
                 <div class="form-group"><label>Category</label><input type="text" id="itemCategory" list="categoryList" required /><datalist id="categoryList"></datalist></div>
+                <div class="form-group"><label>Discount (e.g., "10% off" or "Happy Hour ₹99")</label><input type="text" id="itemDiscount" placeholder="Leave empty for none" /></div>
                 <div class="form-group"><label>Variants (e.g., Small=150|Large=250)</label>
                     <div id="variantsContainer"><div style="display:flex; gap:0.3rem;"><input type="text" class="vname" placeholder="Name" /><input type="number" class="vprice" step="0.01" placeholder="Price" /></div></div>
                     <button type="button" id="addVariantBtn" class="btn-outline">+ Variant</button>
@@ -176,17 +182,18 @@
         </div>
     </div>
 
-    <!-- Menu Items (with Show/Hide toggle) -->
+    <!-- Menu Items -->
     <div class="card">
-        <div class="collapsible-header" id="menuItemsToggle">
-            <h3>📃 Menu Items</h3><span>▼</span>
-        </div>
+        <div class="collapsible-header" id="menuItemsToggle"><h3>📃 Menu Items</h3><span>▼</span></div>
         <div class="collapsed-content open" id="menuItemsSection">
             <div id="menuList"><p class="note">Loading...</p></div>
         </div>
     </div>
 
     <footer>Cafe Boss © 2026 – Free Forever</footer>
+
+    <!-- Hidden audio for order sound -->
+    <audio id="orderSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" preload="auto"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -196,6 +203,61 @@
         const BASE_MENU_URL = 'https://zakiewillplay.github.io/CafeBoss.io/menu.html?id=';
         let currentOrderTab = 'new';
         let allOrders = [];
+        let analyticsChart = null;
+
+        // Language strings
+        const t = {
+            en: {
+                views: "Views", items: "Items", orders: "Orders", analytics: "📊 Analytics (Last 7 Days)",
+                newOrders: "New", accepted: "Accepted", completed: "Completed", noOrders: "No orders",
+                settings: "Settings", cafeName: "Cafe Name", whatsapp: "WhatsApp", description: "Description",
+                primary: "Primary", accent: "Accent", save: "Save", qrMenu: "QR Menu", generateQR: "Generate QR",
+                smartBuilder: "Smart Menu Builder", bulkAdd: "Bulk Add", addItem: "Add Item",
+                name: "Name", price: "Price (₹)", category: "Category", discount: "Discount", variants: "Variants",
+                featured: "🔥 Chef's Special", ai: "AI", menuItems: "Menu Items", loading: "Loading...",
+                noItems: "No items yet.", on: "On", off: "Off", edit: "Edit", del: "Del", accept: "Accept",
+                deliver: "Deliver", pdf: "PDF", print: "Print", copied: "Menu link copied!"
+            },
+            hi: {
+                views: "दृश्य", items: "आइटम", orders: "ऑर्डर", analytics: "📊 विश्लेषण (पिछले 7 दिन)",
+                newOrders: "नया", accepted: "स्वीकृत", completed: "पूर्ण", noOrders: "कोई ऑर्डर नहीं",
+                settings: "सेटिंग्स", cafeName: "कैफे का नाम", whatsapp: "व्हाट्सएप", description: "विवरण",
+                primary: "प्राथमिक", accent: "एक्सेंट", save: "सहेजें", qrMenu: "QR मेनू", generateQR: "QR जनरेट करें",
+                smartBuilder: "स्मार्ट मेनू बिल्डर", bulkAdd: "बल्क जोड़ें", addItem: "आइटम जोड़ें",
+                name: "नाम", price: "मूल्य (₹)", category: "श्रेणी", discount: "छूट", variants: "वेरिएंट",
+                featured: "🔥 शेफ स्पेशल", ai: "AI", menuItems: "मेनू आइटम", loading: "लोड हो रहा है...",
+                noItems: "अभी तक कोई आइटम नहीं।", on: "चालू", off: "बंद", edit: "संपादित", del: "हटाएं",
+                accept: "स्वीकारें", deliver: "डिलीवर", pdf: "PDF", print: "प्रिंट", copied: "मेनू लिंक कॉपी किया गया!"
+            }
+        };
+        let currentLang = 'en';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            const d = t[lang];
+            document.getElementById('lblViews').textContent = d.views;
+            document.getElementById('lblItems').textContent = d.items;
+            document.getElementById('lblOrders').textContent = d.orders;
+            document.getElementById('lblAnalytics').textContent = d.analytics;
+            // Update a few more key elements
+            const saveBtn = document.getElementById('saveSettingsBtn');
+            if (saveBtn) saveBtn.textContent = d.save;
+            const qrBtn = document.getElementById('qrBtn');
+            if (qrBtn) qrBtn.textContent = d.generateQR;
+            const saveItemBtn = document.getElementById('saveItemBtn');
+            if (saveItemBtn) saveItemBtn.textContent = d.addItem;
+        }
+
+        document.getElementById('langSelect').addEventListener('change', (e) => setLanguage(e.target.value));
+
+        // AI description generator
+        const adjectives = ["Delicious", "Creamy", "Spicy", "Tangy", "Savory", "Sweet", "Smoky", "Rich", "Fresh", "Zesty"];
+        const nouns = ["dish", "delight", "treat", "creation", "special", "favorite", "classic"];
+        document.getElementById('aiDescBtn').addEventListener('click', () => {
+            const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const noun = nouns[Math.floor(Math.random() * nouns.length)];
+            document.getElementById('itemDesc').value = `A ${adj.toLowerCase()} ${noun} that will leave you craving more.`;
+        });
 
         const init = () => { if(typeof supabase==='undefined'){setTimeout(init,100);return;} window.client=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY); main(); };
         init();
@@ -209,7 +271,7 @@
             const {data:cafe,error:cafeErr}=await client.from('cafes').select('*').eq('owner_id',user.id).single();
             if(cafeErr||!cafe){alert('Cafe not found. Re-signup.');await client.auth.signOut();window.location.href='auth.html';return;}
 
-            // Collapsible sections (includes menu items toggle)
+            // Collapsible sections
             document.querySelectorAll('.collapsible-header').forEach(h=>{
                 h.addEventListener('click',()=>{
                     const content=h.nextElementSibling;
@@ -235,23 +297,16 @@
                 alert('Saved!');
             });
 
-            // QR Code – high‑contrast image for Google Lens & gallery
+            // QR Code
             document.getElementById('qrBtn').addEventListener('click', () => {
                 const url = BASE_MENU_URL + cafe.id;
                 const qrContainer = document.getElementById('qrcode');
                 qrContainer.innerHTML = '';
-
                 const img = document.createElement('img');
                 img.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000`;
-                img.width = 250;
-                img.height = 250;
-                img.style.display = 'block';
-                img.style.margin = '0 auto';
-                img.style.borderRadius = '12px';
-                img.style.background = '#fff';
-                img.style.padding = '8px';
+                img.width = 250; img.height = 250;
+                img.style.display = 'block'; img.style.margin = '0 auto'; img.style.borderRadius = '12px'; img.style.background = '#fff'; img.style.padding = '8px';
                 qrContainer.appendChild(img);
-
                 document.getElementById('qrLinkDisplay').textContent = url;
                 navigator.clipboard.writeText(url).then(() => alert('Menu link copied!')).catch(() => {});
             });
@@ -266,6 +321,7 @@
                 if(toDelete.length) return loadAllOrders();
                 renderOrderTab();
                 document.getElementById('totalOrders').textContent=allOrders.length||0;
+                updateAnalytics();
             };
             const renderOrderTab = () => {
                 const filtered=allOrders.filter(o=>currentOrderTab==='new'?o.status==='new':currentOrderTab==='accepted'?o.status==='accepted':o.status==='delivered'||o.status==='completed');
@@ -278,7 +334,7 @@
                     let actions='';
                     if(order.status==='new') actions=`<button class="btn-sm btn-accept" data-id="${order.id}">Accept</button>`;
                     else if(order.status==='accepted') actions=`<button class="btn-sm btn-deliver" data-id="${order.id}">Deliver</button>`;
-                    else actions=`<button class="btn-sm btn-pdf" data-id="${order.id}">📄 PDF</button>`;
+                    else actions=`<button class="btn-sm btn-pdf" data-id="${order.id}">📄 PDF</button> <button class="btn-sm btn-print" data-id="${order.id}">🖨️ Print</button>`;
                     return `<div class="order-item"><div class="order-info"><strong>Table ${order.table_number}</strong> <small>${time}</small><div>👤 ${order.customer_name||'Guest'} | ${itemList}</div><div style="color:var(--primary);">₹${order.total}</div></div><div class="order-actions">${actions}</div></div>`;
                 }).join('');
                 attachOrderEvents();
@@ -298,6 +354,19 @@
                     (order.items||[]).forEach((item,i)=>{doc.text(`${i+1}. ${item.name}${item.variant?' ('+item.variant+')':''} ×${item.qty} = Rs.${(item.price*item.qty).toFixed(2)}`,20,y);y+=8;});
                     doc.save(`order_${order.table_number}_${Date.now()}.pdf`);
                 }));
+                document.querySelectorAll('.btn-print').forEach(b=>b.addEventListener('click',function(){
+                    const order=allOrders.find(o=>o.id===this.dataset.id);
+                    if(!order) return;
+                    const {jsPDF}=window.jspdf; const doc=new jsPDF();
+                    doc.text(`Order – Table ${order.table_number}`,15,20);
+                    doc.text(`Customer: ${order.customer_name||'Guest'}`,15,28);
+                    doc.text(`Date: ${new Date(order.created_at).toLocaleString()}`,15,36);
+                    doc.text(`Total: Rs. ${order.total}`,15,44);
+                    let y=54;
+                    (order.items||[]).forEach((item,i)=>{doc.text(`${i+1}. ${item.name}${item.variant?' ('+item.variant+')':''} ×${item.qty} = Rs.${(item.price*item.qty).toFixed(2)}`,20,y);y+=8;});
+                    doc.autoPrint();
+                    window.open(doc.output('bloburl'), '_blank');
+                }));
             };
             document.querySelectorAll('.order-tab').forEach(t=>t.addEventListener('click',function(){
                 document.querySelectorAll('.order-tab').forEach(x=>x.classList.remove('active'));
@@ -308,9 +377,56 @@
             let lastCheck=new Date().toISOString();
             setInterval(async()=>{
                 const {data}=await client.from('orders').select('*').eq('cafe_id',cafe.id).gt('created_at',lastCheck);
-                if(data&&data.length){lastCheck=new Date().toISOString();if(Notification.permission==='granted')new Notification('New Order!',{body:`Table ${data[0].table_number} – ₹${data[0].total}`});loadAllOrders();}
+                if(data&&data.length){
+                    lastCheck=new Date().toISOString();
+                    if(Notification.permission==='granted')new Notification('New Order!',{body:`Table ${data[0].table_number} – ₹${data[0].total}`});
+                    // Play sound
+                    const audio = document.getElementById('orderSound');
+                    if(audio) audio.play().catch(()=>{});
+                    loadAllOrders();
+                }
             },30000);
             await loadAllOrders();
+
+            // ---------- ANALYTICS CHART ----------
+            async function updateAnalytics() {
+                const ctx = document.getElementById('analyticsChart').getContext('2d');
+                // Get last 7 days
+                const days = [];
+                const orderCounts = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    days.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+                    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+                    const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
+                    const { count } = await client.from('orders').select('*', { count: 'exact', head: true })
+                        .eq('cafe_id', cafe.id)
+                        .gte('created_at', start)
+                        .lt('created_at', end);
+                    orderCounts.push(count || 0);
+                }
+                if (analyticsChart) analyticsChart.destroy();
+                analyticsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: days,
+                        datasets: [{
+                            label: 'Orders',
+                            data: orderCounts,
+                            borderColor: '#FF6B35',
+                            backgroundColor: 'rgba(255,107,53,0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }
+                });
+            }
 
             // ---------- ITEMS ----------
             const loadItems = async () => {
@@ -325,6 +441,7 @@
                         const div=document.createElement('div');div.className='menu-item';
                         const hasVariants=item.description&&item.description.startsWith('VAR::');
                         let displayStr=`<strong>${item.name}</strong>`;
+                        if(item.discount) displayStr+=` <span style="background:#c0392b;color:white;font-size:0.7rem;padding:0.1rem 0.4rem;border-radius:8px;">${item.discount}</span>`;
                         if(item.featured) displayStr+=' 🔥';
                         if(hasVariants){
                             const variants=item.description.replace('VAR::','').split('|').map(v=>{const[n,p]=v.split('=');return `${n} ₹${p}`;}).join(', ');
@@ -349,6 +466,7 @@
                     document.getElementById('itemDesc').value=item.description&&!item.description.startsWith('VAR::')?item.description:'';
                     document.getElementById('itemPrice').value=item.price;
                     document.getElementById('itemCategory').value=item.category;
+                    document.getElementById('itemDiscount').value=item.discount||'';
                     document.getElementById('itemFeatured').checked=item.featured;
                     const vContainer=document.getElementById('variantsContainer');vContainer.innerHTML='';
                     if(item.description&&item.description.startsWith('VAR::')){
@@ -370,7 +488,7 @@
             };
             await loadItems();
 
-            // Save item
+            // Save item (with discount)
             document.getElementById('addVariantBtn').addEventListener('click',()=>{
                 const row=document.createElement('div');row.style.display='flex';row.style.gap='0.3rem';
                 row.innerHTML=`<input type="text" class="vname" placeholder="Name" /><input type="number" class="vprice" step="0.01" placeholder="Price" /><button type="button" class="btn-outline remove-variant-btn">✕</button>`;
@@ -383,6 +501,7 @@
                 const desc=document.getElementById('itemDesc').value.trim();
                 let price=parseFloat(document.getElementById('itemPrice').value);
                 const category=document.getElementById('itemCategory').value;
+                const discount=document.getElementById('itemDiscount').value.trim();
                 const featured=document.getElementById('itemFeatured').checked;
                 const vNames=Array.from(document.querySelectorAll('.vname')).map(i=>i.value.trim());
                 const vPrices=Array.from(document.querySelectorAll('.vprice')).map(i=>i.value.trim());
@@ -391,7 +510,7 @@
                 const hasVariants=varStr.length>0;
                 const description=hasVariants?'VAR::'+varStr:desc;
                 if(hasVariants) price=0; else if(isNaN(price)||price<=0) return alert('Enter price or variants');
-                const payload={cafe_id:cafe.id,name,description,price,category,featured};
+                const payload={cafe_id:cafe.id,name,description,price,category,discount,featured};
                 const {error}=id?await client.from('menu_items').update(payload).eq('id',id):await client.from('menu_items').insert(payload);
                 if(error) alert(error.message);
                 else{
@@ -422,7 +541,7 @@
             };
             await loadCategories();
 
-            // Smart Menu Builder (OCR)
+            // Smart Menu Builder (OCR) – same as before
             const cameraInput = document.getElementById('cameraInput');
             const galleryInput = document.getElementById('galleryInput');
             const imagePreview = document.getElementById('imagePreview');
