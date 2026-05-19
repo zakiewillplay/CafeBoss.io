@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes"/>
-    <title>Royal Menu</title>
+    <title>Cafe Boss Menu</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0A0806" />
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- GSAP for staggered animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <style>
         :root {
@@ -34,8 +35,6 @@
             color: var(--light-text);
             background-image: none;
         }
-
-        /* Shimmer entrance */
         .page-loader {
             position: fixed; inset:0; z-index:100; background: #0A0806;
             display: flex; align-items: center; justify-content: center;
@@ -50,15 +49,12 @@
             border-top-color: transparent;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
         .app-wrapper {
             position: relative; z-index:1; max-width: 640px; margin:0 auto;
             padding: 2rem 1rem 7rem; opacity:0; transform: translateY(20px);
             transition: opacity 0.5s ease 0.8s, transform 0.5s ease 0.8s;
         }
         .app-wrapper.visible { opacity:1; transform: translateY(0); }
-
-        /* Theme toggle */
         .theme-toggle {
             position: fixed; top:1.2rem; right:1.2rem; z-index:30;
             background: var(--card-bg); backdrop-filter: blur(20px);
@@ -66,8 +62,13 @@
             padding:0.6rem 1.2rem; border-radius:30px; cursor:pointer;
             font-size:0.85rem; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,0.5);
         }
-
-        /* Header */
+        .lang-toggle {
+            position: fixed; top:1.2rem; right:6rem; z-index:30;
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border:1px solid var(--gold); color:var(--gold);
+            padding:0.5rem 0.8rem; border-radius:20px; cursor:pointer;
+            font-size:0.8rem; font-weight:600;
+        }
         .header {
             text-align: center; margin-bottom: 1.5rem; padding: 2rem 1.5rem;
             background: var(--card-bg); backdrop-filter: blur(24px);
@@ -83,54 +84,28 @@
             letter-spacing: 1px;
         }
         .header p { font-size: 1.1rem; opacity: 0.8; margin-top: 0.4rem; color: var(--gold-light); font-style: italic; }
-
-        /* Search Bar */
-        .search-container {
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
+        .search-container { margin-bottom: 1.5rem; }
         .search-container input {
-            width: 100%;
-            padding: 0.9rem 1.2rem;
-            background: var(--card-bg);
-            border: 1px solid rgba(229,193,88,0.4);
-            border-radius: 40px;
-            color: #fff;
-            font-size: 1rem;
-            font-family: 'Inter', sans-serif;
-            backdrop-filter: blur(12px);
+            width: 100%; padding: 0.9rem 1.2rem; background: var(--card-bg);
+            border: 1px solid rgba(229,193,88,0.4); border-radius: 40px;
+            color: #fff; font-size: 1rem; font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(12px); outline: none;
             transition: border-color 0.3s, box-shadow 0.3s;
-            outline: none;
         }
-        .search-container input::placeholder {
-            color: rgba(229,193,88,0.5);
-        }
-        .search-container input:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 20px rgba(229,193,88,0.3);
-        }
-
-        /* Category tabs – sticky, underlined style */
+        .search-container input::placeholder { color: rgba(229,193,88,0.5); }
+        .search-container input:focus { border-color: var(--gold); box-shadow: 0 0 20px rgba(229,193,88,0.3); }
         .tabs-sticky {
-            position: -webkit-sticky;
-            position: sticky;
-            top: 0;
-            z-index: 15;
-            background: rgba(10,8,6,0.85);
-            backdrop-filter: blur(25px);
-            padding: 0.8rem 0;
-            margin-bottom: 1.5rem;
-            display: flex;
-            gap: 1rem;
-            overflow-x: auto;
+            position: sticky; top: 0; z-index: 15;
+            background: rgba(10,8,6,0.85); backdrop-filter: blur(25px);
+            padding: 0.8rem 0; margin-bottom: 1.5rem;
+            display: flex; gap: 1rem; overflow-x: auto;
             border-bottom: 1px solid rgba(229,193,88,0.3);
         }
         .category-tab {
             background: none; border: none; color: rgba(229,193,88,0.7);
             padding: 0.5rem 1.2rem; font-size: 1rem; font-weight: 600;
             cursor: pointer; white-space: nowrap; position: relative;
-            transition: color 0.2s;
-            font-family: 'Inter', sans-serif;
+            transition: color 0.2s; font-family: 'Inter', sans-serif;
         }
         .category-tab::after {
             content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
@@ -139,14 +114,12 @@
         }
         .category-tab.active { color: var(--gold); }
         .category-tab.active::after { transform: scaleX(1); }
-
-        /* Category cards */
         .category {
             background: var(--card-bg); backdrop-filter: blur(20px);
             border: 1px solid rgba(229,193,88,0.3); border-radius: var(--radius);
             padding: 1.8rem; margin-bottom: 2rem;
             box-shadow: 0 20px 45px rgba(0,0,0,0.5);
-            display: block; /* all categories visible; search hides/show items */
+            display: block;
         }
         .cat-title {
             font-family: 'Libre Baskerville', serif;
@@ -154,20 +127,18 @@
             text-align: center; margin-bottom: 1rem;
             text-transform: uppercase; letter-spacing: 3px;
         }
-
-        /* Item row */
         .item {
             display: flex; align-items: flex-start; justify-content: space-between;
             padding: 1.2rem 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.05);
             border-radius: 14px; transition: background 0.2s, transform 0.2s;
-            opacity: 0; /* hidden initially for GSAP */
+            opacity: 0;
         }
         .item:hover { background: rgba(229,193,88,0.06); transform: translateX(4px); }
         .item-info { flex: 1; min-width: 0; }
-        .item-name { font-family: 'Libre Baskerville', serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.2rem; color: #fff; }
+        .item-name { font-family: 'Libre Baskerville', serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.2rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
+        .discount-badge { background: #c0392b; color: white; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 600; }
+        .featured-badge { background: linear-gradient(135deg, var(--gold), #b8922e); color: #0A0806; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 700; }
         .item-desc { font-size: 0.9rem; opacity: 0.65; margin-bottom: 0.6rem; }
-
-        /* Variant pills */
         .variant-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
         .variant-pill {
             background: rgba(229,193,88,0.08); border: 1px solid rgba(229,193,88,0.4);
@@ -175,8 +146,6 @@
             color: var(--gold); cursor: pointer; transition: all 0.2s; white-space: nowrap;
         }
         .variant-pill.selected { background: var(--gold); color: #0A0806; box-shadow: 0 0 18px rgba(229,193,88,0.5); }
-
-        /* Quantity controls */
         .qty-row { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.5rem; }
         .qty-btn {
             width: 42px; height: 42px; border: 1px solid var(--gold);
@@ -189,8 +158,6 @@
         .qty-num { min-width: 28px; text-align: center; font-weight: 700; font-size: 1.2rem; transition: transform 0.2s; }
         .qty-num.bounce { animation: bounceNum 0.35s ease; }
         @keyframes bounceNum { 0% { transform: scale(1); } 50% { transform: scale(1.6); } 100% { transform: scale(1); } }
-
-        /* Floating cart */
         #cartFloat {
             position: fixed; bottom: 2rem; right: 1.5rem; z-index: 25;
             background: var(--gold); color: #0A0806;
@@ -203,8 +170,6 @@
         #cartFloat.pulse { animation: cartPop 0.4s ease; }
         @keyframes cartPop { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
         #cartBadge { background: #0A0806; color: var(--gold); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; }
-
-        /* Cart preview */
         #cartPreview {
             display: none; position: fixed; bottom: 7rem; right: 1.5rem;
             width: 92%; max-width: 380px;
@@ -224,63 +189,121 @@
         .order-form-group input { width: 100%; padding: 0.7rem; border-radius: 14px; border: 1px solid var(--gold); background: transparent; color: inherit; font-size: 0.95rem; }
         #orderBtn { width: 100%; background: var(--gold); color: #0A0806; border: none; padding: 0.85rem; border-radius: 30px; font-weight: 700; font-size: 1.1rem; margin-top: 0.8rem; cursor: pointer; }
         .success-message { text-align: center; color: var(--gold); font-weight: 600; margin-top: 0.5rem; display: none; }
-
         .share-btn {
             background: transparent; border: 1px solid var(--gold); color: var(--gold);
             padding: 0.7rem 2rem; border-radius: 30px; cursor: pointer; font-size: 0.9rem;
             margin: 2rem auto 0; display: block; transition: background 0.2s;
         }
+        #installBtn {
+            display: none; position: fixed; bottom: 6rem; right: 1.5rem; z-index: 30;
+            background: var(--gold); color: #0A0806; border: none;
+            padding: 0.6rem 1.2rem; border-radius: 30px; font-weight: 600; cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <!-- Page loader -->
     <div class="page-loader" id="pageLoader"><div class="loader-plate"></div></div>
     <button class="theme-toggle" id="themeToggle">🌓 Light</button>
+    <button class="lang-toggle" id="langToggle">हिन्दी</button>
 
     <div class="app-wrapper" id="menuContent">
         <div class="header">
             <h1 id="cafeTitle"></h1>
             <p id="cafeDesc"></p>
         </div>
-
-        <!-- Real‑time search bar -->
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="🔍 Search menu…" autocomplete="off" />
         </div>
-
-        <!-- Sticky category tabs -->
         <div class="tabs-sticky" id="categoryTabs">
             <span class="category-tab active" data-category="all">All</span>
         </div>
-
         <div id="menuList"></div>
         <button class="share-btn" id="shareMenuBtn">📤 Share this Menu</button>
     </div>
 
-    <!-- Floating cart -->
     <div id="cartFloat">🛒 <span id="cartBadge">0</span></div>
     <div id="cartPreview">
-        <h4>Your Order</h4>
+        <h4 id="cartTitle">Your Order</h4>
         <ul id="cartItems"></ul>
-        <p style="color:var(--gold);font-weight:600;">Total: ₹<span id="cartTotal">0.00</span></p>
-        <div class="order-form-group"><label>Table Number *</label><input type="text" id="tableNumber" placeholder="e.g., 12" required /></div>
-        <div class="order-form-group"><label>Your Name (optional)</label><input type="text" id="customerName" placeholder="e.g., Rahul" /></div>
-        <button id="orderBtn">Place Order</button>
+        <p style="color:var(--gold);font-weight:600;"><span id="lblTotal">Total</span>: ₹<span id="cartTotal">0.00</span></p>
+        <div class="order-form-group"><label for="tableNumber" id="lblTable">Table Number *</label><input type="text" id="tableNumber" placeholder="e.g., 12" required /></div>
+        <div class="order-form-group"><label for="customerName" id="lblName">Your Name (optional)</label><input type="text" id="customerName" placeholder="e.g., Rahul" /></div>
+        <button id="orderBtn" id="lblPlaceOrder">Place Order</button>
         <p class="success-message" id="orderSuccess"></p>
     </div>
 
+    <button id="installBtn">📲 Install App</button>
+
     <script>
+        // Page loader
         window.addEventListener('load', () => {
             setTimeout(() => {
                 document.getElementById('pageLoader').classList.add('hidden');
                 document.getElementById('menuContent').classList.add('visible');
             }, 1800);
         });
+        // Theme toggle
         const themeToggle = document.getElementById('themeToggle');
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('light-mode');
             themeToggle.textContent = document.body.classList.contains('light-mode') ? '🌙 Dark' : '🌓 Light';
         });
+        // Language toggle
+        const langStrings = {
+            en: {
+                cartTitle: "Your Order", total: "Total", table: "Table Number *", name: "Your Name (optional)",
+                placeOrder: "Place Order", share: "📤 Share this Menu", searchPlaceholder: "🔍 Search menu…",
+                successPlaced: "✅ Order placed! Waiting for confirmation…", successAccepted: "🎉 Order accepted! Enjoy your meal!",
+                cartEmpty: "Cart is empty", tableRequired: "Please enter your table number"
+            },
+            hi: {
+                cartTitle: "आपका ऑर्डर", total: "कुल", table: "टेबल नंबर *", name: "आपका नाम (वैकल्पिक)",
+                placeOrder: "ऑर्डर करें", share: "📤 मेनू शेयर करें", searchPlaceholder: "🔍 मेनू खोजें…",
+                successPlaced: "✅ ऑर्डर दिया गया! पुष्टि की प्रतीक्षा…", successAccepted: "🎉 ऑर्डर स्वीकृत! अपने भोजन का आनंद लें!",
+                cartEmpty: "कार्ट खाली है", tableRequired: "कृपया टेबल नंबर दर्ज करें"
+            }
+        };
+        let currentLang = 'en';
+        function applyLanguage(lang) {
+            const s = langStrings[lang];
+            document.getElementById('cartTitle').textContent = s.cartTitle;
+            document.getElementById('lblTotal').textContent = s.total;
+            document.getElementById('lblTable').textContent = s.table;
+            document.getElementById('lblName').textContent = s.name;
+            document.getElementById('orderBtn').textContent = s.placeOrder;
+            document.querySelector('.share-btn').textContent = s.share;
+            document.getElementById('searchInput').placeholder = s.searchPlaceholder;
+            // update any visible success messages
+            const successEl = document.getElementById('orderSuccess');
+            if (successEl.style.display === 'block') {
+                if (successEl.textContent.includes('placed')) successEl.textContent = s.successPlaced;
+                else if (successEl.textContent.includes('accepted')) successEl.textContent = s.successAccepted;
+            }
+        }
+        document.getElementById('langToggle').addEventListener('click', () => {
+            currentLang = currentLang === 'en' ? 'hi' : 'en';
+            document.getElementById('langToggle').textContent = currentLang === 'en' ? 'हिन्दी' : 'English';
+            applyLanguage(currentLang);
+        });
+    </script>
+
+    <script>
+        // PWA install
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').style.display = 'block';
+        });
+        document.getElementById('installBtn').addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => { deferredPrompt = null; document.getElementById('installBtn').style.display = 'none'; });
+            }
+        });
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -316,7 +339,6 @@
                 grouped[item.category].push(item);
             });
 
-            // Build category tabs
             const tabsContainer = document.getElementById('categoryTabs');
             const sortedCats = Object.keys(grouped).sort();
             sortedCats.forEach(cat => {
@@ -327,24 +349,15 @@
                 tabsContainer.appendChild(tab);
             });
 
-            // Tab switching + re‑animate
             tabsContainer.addEventListener('click', (e) => {
                 if (!e.target.classList.contains('category-tab')) return;
                 document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
                 e.target.classList.add('active');
                 const selected = e.target.dataset.category;
-                // Show/hide categories and animate visible ones
-                const allCategories = document.querySelectorAll('.category');
-                allCategories.forEach(cat => {
-                    if (selected === 'all' || cat.dataset.cat === selected) {
-                        cat.style.display = 'block';
-                    } else {
-                        cat.style.display = 'none';
-                    }
+                document.querySelectorAll('.category').forEach(cat => {
+                    cat.style.display = (selected === 'all' || cat.dataset.cat === selected) ? 'block' : 'none';
                 });
-                // Also re‑filter for search text
                 filterItems();
-                // Staggered animation on newly visible items
                 animateVisibleItems();
             });
 
@@ -352,7 +365,6 @@
             const cart = {};
             const selectedVariants = {};
 
-            // Render all items into category sections
             sortedCats.forEach(cat => {
                 const section = document.createElement('div');
                 section.className = 'category';
@@ -364,7 +376,6 @@
                     itemDiv.className = 'item';
                     itemDiv.dataset.itemId = item.id;
                     itemDiv.dataset.itemName = item.name;
-                    // Store searchable text in dataset
                     itemDiv.dataset.searchText = `${item.name} ${item.description || ''} ${item.category}`.toLowerCase();
 
                     const hasVariants = item.description && item.description.startsWith('VAR::');
@@ -379,7 +390,8 @@
                     }
 
                     selectedVariants[item.id] = 0;
-                    const featuredBadge = item.featured ? `<span style="background:linear-gradient(135deg,var(--gold),#b8922e);color:#0A0806;font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:14px;font-weight:700;text-transform:uppercase;margin-left:0.5rem;">🔥 Chef's Special</span>` : '';
+                    const discountBadge = item.discount ? `<span class="discount-badge">${item.discount}</span>` : '';
+                    const featuredBadge = item.featured ? `<span class="featured-badge">🔥 Chef's Special</span>` : '';
                     const itemDescHtml = (!hasVariants && item.description) ? `<div class="item-desc">${item.description}</div>` : '';
 
                     let variantPillsHtml = '';
@@ -395,9 +407,8 @@
 
                     const qtyHtml = `<div class="qty-row"><button class="qty-btn qty-dec">−</button><span class="qty-num">0</span><button class="qty-btn qty-inc">+</button></div>`;
 
-                    itemDiv.innerHTML = `<div class="item-info"><div class="item-name">${item.name}${featuredBadge}</div>${itemDescHtml}${variantPillsHtml}<div style="display:flex;align-items:center;justify-content:space-between;">${singlePriceHtml}</div></div>${qtyHtml}`;
+                    itemDiv.innerHTML = `<div class="item-info"><div class="item-name">${item.name}${discountBadge}${featuredBadge}</div>${itemDescHtml}${variantPillsHtml}<div style="display:flex;align-items:center;justify-content:space-between;">${singlePriceHtml}</div></div>${qtyHtml}`;
 
-                    // Variant pills
                     if (variants.length > 1) {
                         const pills = itemDiv.querySelectorAll('.variant-pill');
                         pills.forEach(pill => {
@@ -413,7 +424,6 @@
                         });
                     }
 
-                    // Quantity buttons
                     const qtyDec = itemDiv.querySelector('.qty-dec');
                     const qtyInc = itemDiv.querySelector('.qty-inc');
                     const qtySpan = itemDiv.querySelector('.qty-num');
@@ -439,7 +449,7 @@
                 menuList.appendChild(section);
             });
 
-            // ----- Real‑time search -----
+            // Search
             const searchInput = document.getElementById('searchInput');
             searchInput.addEventListener('input', filterItems);
 
@@ -451,58 +461,32 @@
                     const matches = query === '' || searchText.includes(query);
                     item.style.display = matches ? 'flex' : 'none';
                 });
-                // Update category visibility: hide category if all items inside are hidden
-                const allCategories = document.querySelectorAll('.category');
-                allCategories.forEach(cat => {
-                    const visibleItems = cat.querySelectorAll('.item[style*="display: flex"], .item:not([style*="display"])');
-                    // Need to check computed style actually, but easier: count items where display != none
+                document.querySelectorAll('.category').forEach(cat => {
                     let hasVisible = false;
-                    const itemsInCat = cat.querySelectorAll('.item');
-                    itemsInCat.forEach(item => {
-                        if (item.style.display !== 'none') hasVisible = true;
-                    });
+                    cat.querySelectorAll('.item').forEach(item => { if (item.style.display !== 'none') hasVisible = true; });
                     cat.style.display = hasVisible ? 'block' : 'none';
                 });
-                // Animate visible items after filtering
                 animateVisibleItems();
             }
 
-            // ----- GSAP Staggered Animations -----
             function animateVisibleItems() {
-                // Select items that are currently visible (display not none) and whose parent category is visible
-                const visibleItems = document.querySelectorAll('.category[style*="display: block"] .item[style*="display: flex"], .category[style*="display: block"] .item:not([style*="display"])');
-                // Fallback for categories without inline style
                 const allCats = document.querySelectorAll('.category');
                 let itemsToAnimate = [];
                 allCats.forEach(cat => {
                     if (cat.style.display !== 'none') {
-                        const items = cat.querySelectorAll('.item');
-                        items.forEach(item => {
+                        cat.querySelectorAll('.item').forEach(item => {
                             if (item.style.display !== 'none') itemsToAnimate.push(item);
                         });
                     }
                 });
-                // Reset opacity for GSAP (they start at 0 due to CSS, GSAP will animate to 1)
                 gsap.set(itemsToAnimate, { opacity: 0, y: 20 });
-                gsap.to(itemsToAnimate, {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.4,
-                    stagger: 0.06,
-                    ease: "power2.out"
-                });
+                gsap.to(itemsToAnimate, { opacity: 1, y: 0, duration: 0.4, stagger: 0.06, ease: "power2.out" });
             }
 
-            // Initial animation after load + when first visible
-            window.addEventListener('menuReady', () => {
-                animateVisibleItems();
-            });
-            // Fire after DOM is built (slight delay)
-            setTimeout(() => {
-                window.dispatchEvent(new Event('menuReady'));
-            }, 100);
+            // Initial animation
+            setTimeout(() => { filterItems(); }, 200);
 
-            // Cart UI (unchanged)
+            // Cart UI
             const cartFloat = document.getElementById('cartFloat');
             const cartPreview = document.getElementById('cartPreview');
             const cartBadge = document.getElementById('cartBadge');
@@ -536,17 +520,22 @@
 
             document.getElementById('orderBtn').addEventListener('click', async () => {
                 const items = Object.values(cart);
-                if (items.length === 0) return alert('Cart is empty');
+                if (items.length === 0) return alert(langStrings[currentLang].cartEmpty);
                 const tableNumber = document.getElementById('tableNumber').value.trim();
-                if (!tableNumber) return alert('Please enter your table number');
+                if (!tableNumber) return alert(langStrings[currentLang].tableRequired);
                 const customerName = document.getElementById('customerName').value.trim() || 'Guest';
                 const total = items.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2);
                 try {
-                    const { data: newOrder, error } = await client.from('orders').insert({ cafe_id: cafeId, customer_name: customerName, table_number: tableNumber, items: items.map(i => ({ name: i.name, variant: i.variantName || '', price: i.price, qty: i.qty })), total: parseFloat(total), status: 'new' }).select('id').single();
+                    const { data: newOrder, error } = await client.from('orders').insert({
+                        cafe_id: cafeId, customer_name: customerName, table_number: tableNumber,
+                        items: items.map(i => ({ name: i.name, variant: i.variantName || '', price: i.price, qty: i.qty })),
+                        total: parseFloat(total), status: 'new'
+                    }).select('id').single();
                     if (error) throw error;
                     const orderId = newOrder.id;
-                    document.getElementById('orderSuccess').textContent = '✅ Order placed! Waiting for confirmation…';
-                    document.getElementById('orderSuccess').style.display = 'block';
+                    const successEl = document.getElementById('orderSuccess');
+                    successEl.textContent = langStrings[currentLang].successPlaced;
+                    successEl.style.display = 'block';
                     for (const key in cart) delete cart[key];
                     document.querySelectorAll('.qty-num').forEach(el => el.textContent = '0');
                     updateCartUI();
@@ -554,11 +543,11 @@
                         const { data: order } = await client.from('orders').select('status').eq('id', orderId).single();
                         if (order && order.status === 'accepted') {
                             clearInterval(pollInterval);
-                            document.getElementById('orderSuccess').textContent = '🎉 Order accepted! Enjoy your meal!';
-                            document.getElementById('orderSuccess').style.color = '#4CAF50';
+                            successEl.textContent = langStrings[currentLang].successAccepted;
+                            successEl.style.color = '#4CAF50';
                             if (Notification.permission === 'default') await Notification.requestPermission();
                             if (Notification.permission === 'granted') new Notification('Order Accepted!', { body: 'Your order has been accepted by the cafe.', icon: cafe.logo_url || '' });
-                            setTimeout(() => { cartPreview.style.display = 'none'; cartVisible = false; document.getElementById('orderSuccess').style.display = 'none'; }, 4000);
+                            setTimeout(() => { cartPreview.style.display = 'none'; cartVisible = false; successEl.style.display = 'none'; }, 4000);
                         }
                     }, 5000);
                 } catch (err) { alert('Order failed. Please try again.'); console.error(err); }
@@ -566,12 +555,9 @@
 
             document.getElementById('shareMenuBtn').addEventListener('click', () => {
                 const url = window.location.href;
-                if (navigator.share) { navigator.share({ title: cafe.cafe_name, text: 'Check out our menu!', url }).catch(() => {}); }
-                else { navigator.clipboard.writeText(url).then(() => alert('Menu link copied!')).catch(() => {}); }
+                if (navigator.share) navigator.share({ title: cafe.cafe_name, text: 'Check out our menu!', url }).catch(() => {});
+                else navigator.clipboard.writeText(url).then(() => alert('Menu link copied!')).catch(() => {});
             });
-
-            // Initial call to set up search and animation
-            filterItems();
         }
     </script>
 </body>
