@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="Log in or sign up to Cafe Boss – your free digital QR menu platform."/>
+    <meta name="description" content="Cafe Boss – Login or Sign Up. Free digital QR menus for your cafe."/>
     <title>Cafe Boss – Login</title>
     <style>
         :root {
@@ -21,33 +21,29 @@
             color: var(--text);
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh; padding: 1rem;
-            animation: fadeIn 0.6s ease;
         }
-        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
         .card {
             background: var(--card-bg); padding: 2rem 1.8rem; border-radius: 20px;
             width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            animation: slideUp 0.5s ease;
         }
-        @keyframes slideUp { from { transform: translateY(30px); opacity:0; } to { transform: translateY(0); opacity:1; } }
         h2 { text-align: center; color: var(--primary); font-size: 1.6rem; margin-bottom: 1.5rem; }
         .tabs { display: flex; margin-bottom: 2rem; background: #1e1e1e; border-radius: 10px; overflow: hidden; }
-        .tab { flex:1; text-align: center; padding: 0.7rem; cursor: pointer; color: #aaa; font-weight: 500; transition: background 0.2s; }
+        .tab { flex:1; text-align: center; padding: 0.7rem; cursor: pointer; color: #aaa; font-weight: 500; }
         .tab.active { background: var(--primary); color: white; }
         .form-group { margin-bottom: 1.2rem; }
         label { display: block; margin-bottom: 0.4rem; font-size: 0.9rem; opacity: 0.8; }
         input {
             width: 100%; padding: 0.8rem 1rem; border-radius: 10px;
             border: 1px solid #444; background: #1e1e1e; color: var(--cream);
-            font-size: 1rem; transition: border 0.2s;
+            font-size: 1rem;
         }
         input:focus { outline: none; border-color: var(--primary); }
         button {
             width: 100%; padding: 0.8rem; background: var(--primary); color: white;
             border: none; border-radius: 30px; font-size: 1rem; font-weight: 600;
-            cursor: pointer; margin-top: 0.8rem; transition: background 0.2s, transform 0.1s;
+            cursor: pointer; margin-top: 0.8rem;
         }
-        button:hover { background: #e85d2a; transform: translateY(-2px); }
+        button:active { transform: scale(0.97); }
         .error, .success { font-size: 0.85rem; margin-top: 0.5rem; display: none; }
         .error { color: #ff4d4d; } .success { color: #4caf50; }
         .back-link, .forgot-link { text-align: center; margin-top: 1rem; font-size: 0.85rem; }
@@ -65,14 +61,21 @@
                 <div class="tab" id="signupTab">Sign Up</div>
             </div>
             <form id="authForm">
-                <div class="form-group"><label for="email">Email</label><input type="email" id="email" required placeholder="you@example.com"/></div>
-                <div class="form-group"><label for="password">Password</label><input type="password" id="password" required placeholder="••••••••" minlength="6"/></div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="you@example.com"/>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="••••••••" minlength="6"/>
+                </div>
                 <p class="error" id="errorMsg"></p>
                 <button type="submit" id="submitBtn">Log in</button>
             </form>
             <div class="forgot-link"><a id="forgotPasswordLink">Forgot Password?</a></div>
             <div class="back-link"><a href="index.html">← Back to home</a></div>
         </div>
+
         <div id="resetRequestView" class="hidden">
             <h2>Reset Password</h2>
             <p class="form-message">Enter your email and we'll send you a reset link.</p>
@@ -84,6 +87,7 @@
             </form>
             <div class="back-link"><a id="backToLoginLink">← Back to Login</a></div>
         </div>
+
         <div id="newPasswordView" class="hidden">
             <h2>New Password</h2>
             <form id="newPasswordForm">
@@ -95,21 +99,34 @@
             <div class="back-link"><a href="auth.html">← Login</a></div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module">
         const SUPABASE_URL = 'https://hhkuvffjjaglhutlxncm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhoa3V2ZmZqamFnbGh1dGx4bmNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTY3MzEsImV4cCI6MjA5NDY3MjczMX0.wbuGuK9hV9ie4afGuyximb7iK_g9dj9CVaXNY8guxDw';
+
         const init = () => { if(typeof supabase==='undefined'){setTimeout(init,100);return;} window.client=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY); main(); };
         init();
+
         function main() {
             const client=window.client;
             const urlParams=new URLSearchParams(window.location.search);
             const isRecovery=urlParams.get('type')==='recovery';
+
             const normalView=document.getElementById('normalView');
             const resetRequestView=document.getElementById('resetRequestView');
             const newPasswordView=document.getElementById('newPasswordView');
-            if(isRecovery){ normalView.classList.add('hidden'); resetRequestView.classList.add('hidden'); newPasswordView.classList.remove('hidden'); }
-            else { normalView.classList.remove('hidden'); resetRequestView.classList.add('hidden'); newPasswordView.classList.add('hidden'); }
+
+            if(isRecovery){
+                normalView.classList.add('hidden');
+                resetRequestView.classList.add('hidden');
+                newPasswordView.classList.remove('hidden');
+            } else {
+                normalView.classList.remove('hidden');
+                resetRequestView.classList.add('hidden');
+                newPasswordView.classList.add('hidden');
+            }
+
             const form=document.getElementById('authForm');
             const emailInp=document.getElementById('email');
             const passInp=document.getElementById('password');
@@ -118,58 +135,121 @@
             const signupTab=document.getElementById('signupTab');
             const submitBtn=document.getElementById('submitBtn');
             let mode='login';
+
             loginTab.addEventListener('click',()=>switchMode('login'));
             signupTab.addEventListener('click',()=>switchMode('signup'));
-            function switchMode(m){ mode=m; loginTab.classList.toggle('active',m==='login'); signupTab.classList.toggle('active',m==='signup'); submitBtn.textContent=m==='login'?'Log in':'Sign Up'; errorEl.style.display='none'; }
+
+            function switchMode(m){
+                mode=m;
+                loginTab.classList.toggle('active',m==='login');
+                signupTab.classList.toggle('active',m==='signup');
+                submitBtn.textContent=m==='login'?'Log in':'Sign Up';
+                errorEl.style.display='none';
+            }
+
             form.addEventListener('submit',async(e)=>{
-                e.preventDefault(); errorEl.style.display='none';
-                const email=emailInp.value.trim(), password=passInp.value;
-                try{
+                e.preventDefault();
+                errorEl.style.display='none';
+                const email=emailInp.value.trim();
+                const password=passInp.value;
+
+                try {
                     if(mode==='signup'){
                         const {data,error}=await client.auth.signUp({email,password});
-                        if(error) throw error;
+                        if(error){
+                            // If user already exists but maybe not verified, give a helpful message
+                            if(error.message.includes('already registered') || error.message.includes('already exists')){
+                                errorEl.textContent='This email is already registered. Try logging in instead.';
+                            } else {
+                                errorEl.textContent=error.message;
+                            }
+                            errorEl.style.display='block';
+                            return;
+                        }
                         if(data.user){
+                            // Ensure cafe row is created
                             const {error:insertErr}=await client.from('cafes').insert({owner_id:data.user.id});
-                            if(insertErr && insertErr.code!=='23505') throw insertErr;
+                            if(insertErr && insertErr.code!=='23505'){ // not duplicate
+                                errorEl.textContent='Account created but cafe setup failed. Try logging in.';
+                                errorEl.style.display='block';
+                                return;
+                            }
                             window.location.href='dashboard.html';
                         }
                     } else {
-                        const {error}=await client.auth.signInWithPassword({email,password});
-                        if(error) throw error;
+                        // Login
+                        const {data,error}=await client.auth.signInWithPassword({email,password});
+                        if(error){
+                            errorEl.textContent=error.message;
+                            errorEl.style.display='block';
+                            return;
+                        }
                         window.location.href='dashboard.html';
                     }
-                } catch(err){ errorEl.textContent=err.message; errorEl.style.display='block'; }
+                } catch(err){
+                    errorEl.textContent=err.message;
+                    errorEl.style.display='block';
+                }
             });
-            document.getElementById('forgotPasswordLink').addEventListener('click',()=>{ normalView.classList.add('hidden'); resetRequestView.classList.remove('hidden'); });
-            document.getElementById('backToLoginLink').addEventListener('click',(e)=>{ e.preventDefault(); normalView.classList.remove('hidden'); resetRequestView.classList.add('hidden'); });
+
+            document.getElementById('forgotPasswordLink').addEventListener('click',()=>{
+                normalView.classList.add('hidden');
+                resetRequestView.classList.remove('hidden');
+            });
+            document.getElementById('backToLoginLink').addEventListener('click',(e)=>{
+                e.preventDefault();
+                normalView.classList.remove('hidden');
+                resetRequestView.classList.add('hidden');
+            });
+
             const resetForm=document.getElementById('resetForm');
             const resetEmail=document.getElementById('resetEmail');
             const resetError=document.getElementById('resetError');
             const resetSuccess=document.getElementById('resetSuccess');
+
             resetForm.addEventListener('submit',async(e)=>{
-                e.preventDefault(); resetError.style.display='none'; resetSuccess.style.display='none';
+                e.preventDefault();
+                resetError.style.display='none';
+                resetSuccess.style.display='none';
                 const email=resetEmail.value.trim();
-                try{
+                try {
                     const redirectURL=window.location.href.replace(/auth\.html.*/,'auth.html?type=recovery');
                     const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:redirectURL});
                     if(error) throw error;
-                    resetSuccess.textContent='Reset link sent! Check your email.'; resetSuccess.style.display='block';
-                } catch(err){ resetError.textContent=err.message; resetError.style.display='block'; }
+                    resetSuccess.textContent='Reset link sent! Check your email.';
+                    resetSuccess.style.display='block';
+                } catch(err){
+                    resetError.textContent=err.message;
+                    resetError.style.display='block';
+                }
             });
+
             const newPasswordForm=document.getElementById('newPasswordForm');
             const newPass=document.getElementById('newPassword');
             const newPassErr=document.getElementById('newPasswordError');
             const newPassOk=document.getElementById('newPasswordSuccess');
+
             newPasswordForm.addEventListener('submit',async(e)=>{
-                e.preventDefault(); newPassErr.style.display='none'; newPassOk.style.display='none';
-                try{
+                e.preventDefault();
+                newPassErr.style.display='none';
+                newPassOk.style.display='none';
+                try {
                     const {error}=await client.auth.updateUser({password:newPass.value});
                     if(error) throw error;
-                    newPassOk.textContent='Password updated! Redirecting…'; newPassOk.style.display='block';
-                    setTimeout(()=>{ window.location.href='auth.html'; },2000);
-                } catch(err){ newPassErr.textContent=err.message; newPassErr.style.display='block'; }
+                    newPassOk.textContent='Password updated! Redirecting…';
+                    newPassOk.style.display='block';
+                    setTimeout(()=>{window.location.href='auth.html';},2000);
+                } catch(err){
+                    newPassErr.textContent=err.message;
+                    newPassErr.style.display='block';
+                }
             });
-            if(!isRecovery){ client.auth.getSession().then(({data})=>{ if(data.session) window.location.href='dashboard.html'; }); }
+
+            if(!isRecovery){
+                client.auth.getSession().then(({data})=>{
+                    if(data.session) window.location.href='dashboard.html';
+                });
+            }
         }
     </script>
 </body>
