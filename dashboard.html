@@ -204,6 +204,18 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script type="module">
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
         const SUPABASE_URL = 'https://hhkuvffjjaglhutlxncm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhoa3V2ZmZqamFnbGh1dGx4bmNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTY3MzEsImV4cCI6MjA5NDY3MjczMX0.wbuGuK9hV9ie4afGuyximb7iK_g9dj9CVaXNY8guxDw';
         const BASE_MENU_URL = 'https://zakiewillplay.github.io/CafeBoss.io/menu.html?id=';
@@ -348,13 +360,13 @@
                 if(!filtered.length){container.innerHTML='<p class="note">No orders</p>';return;}
                 container.innerHTML = filtered.map(order=>{
                     const items = order.items||[];
-                    const itemList = items.map(i=>`${i.name}${i.variant?' ('+i.variant+')':''} ×${i.qty}`).join(', ');
+                    const itemList = items.map(i=>`${escapeHTML(i.name)}${i.variant?' ('+escapeHTML(i.variant)+')':''} ×${escapeHTML(i.qty)}`).join(', ');
                     const time = new Date(order.created_at).toLocaleTimeString();
                     let actions = '';
-                    if(order.status==='new') actions = `<button class="btn-sm btn-accept" data-id="${order.id}">Accept</button>`;
-                    else if(order.status==='accepted') actions = `<button class="btn-sm btn-deliver" data-id="${order.id}">Deliver</button>`;
-                    else actions = `<button class="btn-sm btn-pdf" data-id="${order.id}">📄 PDF</button> <button class="btn-sm btn-print" data-id="${order.id}">🖨️ Print</button>`;
-                    return `<div class="order-item"><div class="order-info"><strong>Table ${order.table_number}</strong> <small>${time}</small><div>👤 ${order.customer_name||'Guest'} | ${itemList}</div><div style="color:var(--primary);">₹${order.total}</div></div><div class="order-actions">${actions}</div></div>`;
+                    if(order.status==='new') actions = `<button class="btn-sm btn-accept" data-id="${escapeHTML(order.id)}">Accept</button>`;
+                    else if(order.status==='accepted') actions = `<button class="btn-sm btn-deliver" data-id="${escapeHTML(order.id)}">Deliver</button>`;
+                    else actions = `<button class="btn-sm btn-pdf" data-id="${escapeHTML(order.id)}">📄 PDF</button> <button class="btn-sm btn-print" data-id="${escapeHTML(order.id)}">🖨️ Print</button>`;
+                    return `<div class="order-item"><div class="order-info"><strong>Table ${escapeHTML(order.table_number)}</strong> <small>${escapeHTML(time)}</small><div>👤 ${escapeHTML(order.customer_name||'Guest')} | ${itemList}</div><div style="color:var(--primary);">₹${escapeHTML(order.total)}</div></div><div class="order-actions">${actions}</div></div>`;
                 }).join('');
                 attachOrderEvents();
             };
@@ -496,15 +508,15 @@
                     data.forEach(item=>{
                         const div = document.createElement('div'); div.className = 'menu-item';
                         const hasVariants = item.description&&item.description.startsWith('VAR::');
-                        let displayStr = `<strong>${item.name}</strong>`;
-                        if(item.discount) displayStr += ` <span style="background:#c0392b;color:white;font-size:0.7rem;padding:0.1rem 0.4rem;border-radius:8px;">${item.discount}</span>`;
+                        let displayStr = `<strong>${escapeHTML(item.name)}</strong>`;
+                        if(item.discount) displayStr += ` <span style="background:#c0392b;color:white;font-size:0.7rem;padding:0.1rem 0.4rem;border-radius:8px;">${escapeHTML(item.discount)}</span>`;
                         if(item.featured) displayStr += ' 🔥';
                         if(hasVariants){
-                            const variants = item.description.replace('VAR::','').split('|').map(v=>{const[n,p]=v.split('=');return `${n} ₹${p}`;}).join(', ');
+                            const variants = item.description.replace('VAR::','').split('|').map(v=>{const[n,p]=v.split('=');return `${escapeHTML(n)} ₹${escapeHTML(p)}`;}).join(', ');
                             displayStr += ` (${variants})`;
-                        }else displayStr += ` · ₹${item.price}`;
-                        displayStr += ` <small>(${item.category})</small>`;
-                        div.innerHTML = `<div>${displayStr}</div><div><button class="btn-sm toggle-avail-btn ${item.available?'available':''}" data-id="${item.id}" data-avail="${item.available}">${item.available?'On':'Off'}</button> <button class="btn-sm btn-outline edit-item-btn" data-id="${item.id}">Edit</button> <button class="btn-sm btn-deliver del-item-btn" data-id="${item.id}">Del</button></div>`;
+                        }else displayStr += ` · ₹${escapeHTML(item.price)}`;
+                        displayStr += ` <small>(${escapeHTML(item.category)})</small>`;
+                        div.innerHTML = `<div>${displayStr}</div><div><button class="btn-sm toggle-avail-btn ${item.available?'available':''}" data-id="${escapeHTML(item.id)}" data-avail="${item.available}">${item.available?'On':'Off'}</button> <button class="btn-sm btn-outline edit-item-btn" data-id="${escapeHTML(item.id)}">Edit</button> <button class="btn-sm btn-deliver del-item-btn" data-id="${escapeHTML(item.id)}">Del</button></div>`;
                         menuList.appendChild(div);
                     });
                     document.getElementById('totalItems').textContent = data.length||0;
@@ -529,7 +541,7 @@
                         item.description.replace('VAR::','').split('|').forEach(p=>{
                             const[n,pr]=p.split('=');
                             const row = document.createElement('div'); row.style.display='flex'; row.style.gap='0.3rem';
-                            row.innerHTML = `<input type="text" class="vname" value="${n}" /><input type="number" class="vprice" step="0.01" value="${pr}" /><button type="button" class="btn-outline remove-variant-btn">✕</button>`;
+                            row.innerHTML = `<input type="text" class="vname" value="${escapeHTML(n)}" /><input type="number" class="vprice" step="0.01" value="${escapeHTML(pr)}" /><button type="button" class="btn-outline remove-variant-btn">✕</button>`;
                             vContainer.appendChild(row); row.querySelector('.remove-variant-btn').addEventListener('click',()=>row.remove());
                         });
                     }else{
@@ -596,7 +608,7 @@
                 if(cafe.id === 'temp') return;
                 const{data}=await client.from('menu_items').select('category').eq('cafe_id',cafe.id);
                 const cats = [...new Set((data||[]).map(i=>i.category))].filter(Boolean);
-                document.getElementById('categoryList').innerHTML = cats.map(c=>`<option value="${c}">`).join('');
+                document.getElementById('categoryList').innerHTML = cats.map(c=>`<option value="${escapeHTML(c)}">`).join('');
             };
             await loadCategories();
 
@@ -638,7 +650,7 @@
                         logger: m => { if(m.status==='recognizing text'){ ocrBar.value = Math.round(m.progress*100); ocrStatus.textContent = `Reading... ${Math.round(m.progress*100)}%`; } }
                     });
                     extractedItems = text.split('\n').filter(l=>l.trim()).map(line=>{ const m = line.match(/(.+?)\s*[₹]?(\d+\.?\d*)\s*$/); return m?{name:m[1].trim(),price:m[2]}:null; }).filter(Boolean);
-                    scanResult.innerHTML = extractedItems.map((item,idx)=>`<div style="display:flex;gap:0.3rem;margin-bottom:0.3rem;"><input type="text" value="${item.name}" style="flex:2" /><input type="number" value="${item.price}" step="0.01" style="flex:1" /><button class="btn-outline remove-extracted-btn" data-index="${idx}">✕</button></div>`).join('');
+                    scanResult.innerHTML = extractedItems.map((item,idx)=>`<div style="display:flex;gap:0.3rem;margin-bottom:0.3rem;"><input type="text" value="${escapeHTML(item.name)}" style="flex:2" /><input type="number" value="${escapeHTML(item.price)}" step="0.01" style="flex:1" /><button class="btn-outline remove-extracted-btn" data-index="${idx}">✕</button></div>`).join('');
                     document.querySelectorAll('.remove-extracted-btn').forEach(b=>b.addEventListener('click',function(){ extractedItems.splice(+this.dataset.index,1); scanBtn.click(); }));
                     categoryAssign.style.display = 'block';
                 }catch(err){ alert('OCR failed: '+err.message); }

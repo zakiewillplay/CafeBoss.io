@@ -308,6 +308,18 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module">
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
         const SUPABASE_URL = 'https://hhkuvffjjaglhutlxncm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhoa3V2ZmZqamFnbGh1dGx4bmNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwOTY3MzEsImV4cCI6MjA5NDY3MjczMX0.wbuGuK9hV9ie4afGuyximb7iK_g9dj9CVaXNY8guxDw';
 
@@ -369,7 +381,7 @@
                 const section = document.createElement('div');
                 section.className = 'category';
                 section.dataset.cat = cat;
-                section.innerHTML = `<h2 class="cat-title">${cat}</h2>`;
+                section.innerHTML = `<h2 class="cat-title">${escapeHTML(cat)}</h2>`;
 
                 grouped[cat].forEach(item => {
                     const itemDiv = document.createElement('div');
@@ -392,7 +404,7 @@
                     selectedVariants[item.id] = 0;
                     const discountBadge = item.discount ? `<span class="discount-badge">${item.discount}</span>` : '';
                     const featuredBadge = item.featured ? `<span class="featured-badge">🔥 Chef's Special</span>` : '';
-                    const itemDescHtml = (!hasVariants && item.description) ? `<div class="item-desc">${item.description}</div>` : '';
+                    const itemDescHtml = (!hasVariants && item.description) ? `<div class="item-desc">${escapeHTML(item.description)}</div>` : '';
 
                     let variantPillsHtml = '';
                     if (variants.length > 1) {
@@ -407,7 +419,7 @@
 
                     const qtyHtml = `<div class="qty-row"><button class="qty-btn qty-dec">−</button><span class="qty-num">0</span><button class="qty-btn qty-inc">+</button></div>`;
 
-                    itemDiv.innerHTML = `<div class="item-info"><div class="item-name">${item.name}${discountBadge}${featuredBadge}</div>${itemDescHtml}${variantPillsHtml}<div style="display:flex;align-items:center;justify-content:space-between;">${singlePriceHtml}</div></div>${qtyHtml}`;
+                    itemDiv.innerHTML = `<div class="item-info"><div class="item-name">${escapeHTML(item.name)}${discountBadge}${featuredBadge}</div>${itemDescHtml}${variantPillsHtml}<div style="display:flex;align-items:center;justify-content:space-between;">${singlePriceHtml}</div></div>${qtyHtml}`;
 
                     if (variants.length > 1) {
                         const pills = itemDiv.querySelectorAll('.variant-pill');
@@ -499,7 +511,7 @@
                 const items = Object.values(cart);
                 cartBadge.textContent = items.reduce((s, i) => s + i.qty, 0);
                 cartTotalEl.textContent = items.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2);
-                cartItemsEl.innerHTML = items.map((item, idx) => `<li><span>${item.name}${item.variantName ? ' (' + item.variantName + ')' : ''} × ${item.qty}</span><span>₹${(item.price * item.qty).toFixed(2)}<button class="remove-item" data-key="${Object.keys(cart)[idx]}">✕</button></span></li>`).join('');
+                cartItemsEl.innerHTML = items.map((item, idx) => `<li><span>${escapeHTML(item.name)}${item.variantName ? ' (' + escapeHTML(item.variantName) + ')' : ''} × ${escapeHTML(item.qty)}</span><span>₹${(item.price * item.qty).toFixed(2)}<button class="remove-item" data-key="${escapeHTML(Object.keys(cart)[idx])}">✕</button></span></li>`).join('');
                 document.querySelectorAll('.remove-item').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const key = e.target.dataset.key; delete cart[key];
